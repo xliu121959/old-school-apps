@@ -670,6 +670,22 @@ h1 {
   margin-top: 12px;
 }
 
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.download-actions .download-link,
+.download-actions .primary-action {
+  margin-top: 0;
+}
+
+.featured-actions {
+  margin-top: 16px;
+}
+
 .featured-section,
 .screens-section {
   padding: 14px 0 36px;

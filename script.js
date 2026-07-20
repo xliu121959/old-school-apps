@@ -5,8 +5,16 @@ const apps = [
     features: ["Smart drawers and folders", "OCR for scans and receipts", "AI tags and filing rules"],
     platform: "Mac",
     status: "Available",
-    action: "Download for Mac",
-    link: "https://example.com/retro-file-cabinet/download",
+    downloads: [
+      {
+        action: "Download for Windows",
+        link: "https://github.com/xliu121959/doc_organizer/releases/download/v0.1.0/Private.File.Organizer_0.1.0_x64-setup.exe",
+      },
+      {
+        action: "Download for Mac",
+        link: "https://github.com/xliu121959/doc_organizer/releases/download/v0.1.0/Private.File.Organizer_0.1.0_aarch64.dmg",
+      },
+    ],
     icon: "cabinet",
   },
   {
@@ -110,6 +118,10 @@ const appGrid = document.querySelector("#app-grid");
 
 function renderAppCard(app) {
   const featureItems = app.features.map((feature) => `<li>${feature}</li>`).join("");
+  const downloads = app.downloads || [{ action: app.action, link: app.link }];
+  const downloadLinks = downloads
+    .map((download) => `<a class="download-link" href="${download.link}">${download.action}</a>`)
+    .join("");
 
   return `
     <article class="app-card">
@@ -125,7 +137,7 @@ function renderAppCard(app) {
         <p>${app.tagline}</p>
         <ul>${featureItems}</ul>
       </div>
-      <a class="download-link" href="${app.link}">${app.action}</a>
+      <div class="download-actions">${downloadLinks}</div>
     </article>
   `;
 }
