@@ -22,9 +22,17 @@ const apps = [
     tagline: "Focused writing with a paper-and-ink feel.",
     features: ["Distraction-free writing", "Subtle paper texture", "Optional typewriter sounds"],
     platform: "Mac",
-    status: "Beta",
-    action: "Download for Mac",
-    link: "https://example.com/typewriter-notes/download",
+    status: "Available",
+    downloads: [
+      {
+        action: "Download for Windows",
+        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.1.0/Typewriter.Notes.Setup-0.1.0.exe",
+      },
+      {
+        action: "Download for Mac",
+        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.1.0/Typewriter.Notes-0.1.0.dmg",
+      },
+    ],
     icon: "typewriter",
   },
   {
@@ -32,9 +40,9 @@ const apps = [
     tagline: "Track movies like a rental-store shelf.",
     features: ["Shelf-style collections", "Rental label ratings", "Watched and rewound lists"],
     platform: "Web",
-    status: "Available",
-    action: "Open Web App",
-    link: "https://example.com/vhs-watchlist",
+    status: "Coming Soon",
+    action: "Join Waitlist",
+    link: "https://example.com/vhs-watchlist/waitlist",
     icon: "vhs",
   },
   {
@@ -42,9 +50,9 @@ const apps = [
     tagline: "Voice memos organized as tapes and labels.",
     features: ["Tape-based collections", "Rewind and clip markers", "Custom cassette labels"],
     platform: "iOS",
-    status: "Beta",
-    action: "Download on App Store",
-    link: "https://example.com/cassette-voice-notes/app-store",
+    status: "Coming Soon",
+    action: "Join Waitlist",
+    link: "https://example.com/cassette-voice-notes/waitlist",
     icon: "cassette",
   },
   {
