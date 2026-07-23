@@ -20,6 +20,7 @@ async function supabaseRequest(path, options = {}, useServiceRole = false) {
   const headers = {
     apikey: key,
     "Content-Type": "application/json",
+    ...(useServiceRole ? { Authorization: `Bearer ${key}` } : {}),
     ...options.headers,
   };
   const response = await fetch(`${requiredEnv("SUPABASE_URL")}${path}`, {
