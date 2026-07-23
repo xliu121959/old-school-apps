@@ -15,6 +15,14 @@ async function updateProfile(customerId, values) {
   }, true);
 }
 
+function getCurrentPeriodEnd(subscription) {
+  const itemPeriodEnds = subscription.items?.data
+    ?.map((item) => item.current_period_end)
+    .filter(Number.isFinite) || [];
+  const timestamp = subscription.current_period_end || Math.max(0, ...itemPeriodEnds);
+  return timestamp ? new Date(timestamp * 1000).toISOString() : null;
+}
+
 module.exports = async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -46,7 +54,7 @@ module.exports = async function handler(request, response) {
         plan: active ? "pro" : "free",
         subscription_status: subscription.status,
         stripe_subscription_id: subscription.id,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_end: getCurrentPeriodEnd(subscription),
       });
     }
 
