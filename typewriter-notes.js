@@ -1,5 +1,8 @@
 const STORAGE_KEY = "typewriter-notes-prototype-state-v4";
 const LEGACY_STORAGE_KEYS = ["typewriter-notes-prototype-state-v3"];
+const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const FREE_NOTE_LIMIT = 25;
+const FREE_HISTORY_LIMIT = 3;
 
 const starterNotes = [
   {
@@ -106,6 +109,10 @@ const themeAppearanceDefaults = {
 };
 
 const state = loadState();
+const authState = {
+  session: loadSession(),
+  profile: null,
+};
 const elements = {
   body: document.body,
   sidebar: document.querySelector("#sidebar"),
@@ -146,9 +153,32 @@ const elements = {
   saveVersionButton: document.querySelector("#saveVersionButton"),
   tagList: document.querySelector("#tagList"),
   toast: document.querySelector("#toast"),
+  cloudState: document.querySelector("#cloudState"),
+  accountButton: document.querySelector("#accountButton"),
+  upgradeButton: document.querySelector("#upgradeButton"),
+  authDialog: document.querySelector("#authDialog"),
+  authForm: document.querySelector("#authForm"),
+  authEmail: document.querySelector("#authEmail"),
+  authPassword: document.querySelector("#authPassword"),
+  authMessage: document.querySelector("#authMessage"),
+  signUpButton: document.querySelector("#signUpButton"),
+  closeAuthButton: document.querySelector("#closeAuthButton"),
+  accountDialog: document.querySelector("#accountDialog"),
+  accountEmail: document.querySelector("#accountEmail"),
+  accountPlan: document.querySelector("#accountPlan"),
+  accountMessage: document.querySelector("#accountMessage"),
+  accountUpgradeButton: document.querySelector("#accountUpgradeButton"),
+  billingButton: document.querySelector("#billingButton"),
+  signOutButton: document.querySelector("#signOutButton"),
+  closeAccountButton: document.querySelector("#closeAccountButton"),
+  upgradeDialog: document.querySelector("#upgradeDialog"),
+  upgradeMessage: document.querySelector("#upgradeMessage"),
+  checkoutButton: document.querySelector("#checkoutButton"),
+  closeUpgradeButton: document.querySelector("#closeUpgradeButton"),
 };
 
 let saveTimer;
+let cloudSaveTimer;
 let notebookDialogMode = "create";
 let audioContext;
 
@@ -183,6 +213,28 @@ function loadState() {
     theme: "classic",
     appearance: { ...defaultAppearance },
     lastSaved: "Saved",
+  };
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)) || null;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
+}
+
+function normalizeLoadedState(loaded) {
+  return {
+    ...loaded,
+    notes: normalizeNotes(loaded.notes || starterNotes),
+    notebooks: normalizeNotebooks(loaded.notebooks, loaded.notes || starterNotes),
+    theme: normalizeTheme(loaded.theme),
+    appearance: {
+      ...defaultAppearance,
+      ...(loaded.appearance || {}),
+    },
   };
 }
 
@@ -225,8 +277,10 @@ function normalizeNotebooks(notebooks, notes) {
 
 function saveState(label = "Saved") {
   state.lastSaved = label;
+  state.clientUpdatedAt = Date.now();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   elements.savedState.textContent = label;
+  scheduleCloudSave();
 }
 
 function getActiveNote() {
@@ -341,6 +395,23 @@ function renderSettings() {
   elements.focusButton.textContent = state.focusMode ? "Exit Focus" : "Focus Mode";
   elements.soundState.textContent = state.soundOn ? "Sound on" : "Sound off";
   elements.savedState.textContent = state.lastSaved;
+  renderAccountState();
+}
+
+function isPro() {
+  return authState.profile?.plan === "pro";
+}
+
+function renderAccountState() {
+  const signedIn = Boolean(authState.session?.access_token);
+  const pro = isPro();
+  elements.accountButton.textContent = signedIn ? "Account" : "Sign In";
+  elements.upgradeButton.hidden = pro;
+  elements.cloudState.textContent = signedIn ? (pro ? "Cloud / Pro" : "Cloud / Free") : "Local only";
+  elements.accountEmail.textContent = authState.profile?.email || authState.session?.user?.email || "";
+  elements.accountPlan.textContent = pro ? "Pro" : "Free";
+  elements.accountUpgradeButton.hidden = pro;
+  elements.billingButton.hidden = !authState.profile?.canManageBilling;
 }
 
 function render() {
@@ -381,6 +452,162 @@ function scheduleSave() {
   saveTimer = setTimeout(() => {
     saveState("Saved");
   }, 350);
+}
+
+function scheduleCloudSave() {
+  if (!authState.session?.access_token) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(saveCloudState, 900);
+}
+
+async function apiRequest(path, options = {}, retry = true) {
+  if (authState.session && authState.session.expires_at * 1000 < Date.now() + 60000) {
+    await refreshSession();
+  }
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+  if (authState.session?.access_token) {
+    headers.Authorization = `Bearer ${authState.session.access_token}`;
+  }
+  const response = await fetch(path, { ...options, headers });
+  if (response.status === 401 && retry && authState.session?.refresh_token) {
+    await refreshSession();
+    return apiRequest(path, options, false);
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+async function refreshSession() {
+  if (!authState.session?.refresh_token) throw new Error("Sign in required");
+  const response = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "refresh", refreshToken: authState.session.refresh_token }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    signOut(false);
+    throw new Error(data.error || "Your session expired");
+  }
+  setSession(data);
+}
+
+function setSession(session) {
+  authState.session = session;
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+}
+
+async function saveCloudState() {
+  if (!authState.session?.access_token) return;
+  elements.cloudState.textContent = "Cloud saving...";
+  try {
+    await apiRequest("/api/state", {
+      method: "PUT",
+      body: JSON.stringify({ state }),
+    });
+    elements.cloudState.textContent = isPro() ? "Cloud / Pro" : "Cloud / Free";
+  } catch (error) {
+    elements.cloudState.textContent = "Cloud error";
+    showToast(error.message);
+  }
+}
+
+async function syncCloudState() {
+  if (!authState.session?.access_token) return;
+  elements.cloudState.textContent = "Cloud syncing...";
+  const cloud = await apiRequest("/api/state");
+  if (cloud.state && Number(cloud.state.clientUpdatedAt || 0) > Number(state.clientUpdatedAt || 0)) {
+    Object.assign(state, normalizeLoadedState(cloud.state));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    render();
+    showToast("Cloud writing restored.");
+  } else {
+    await saveCloudState();
+  }
+}
+
+async function loadAccount() {
+  if (!authState.session?.access_token) return;
+  authState.profile = await apiRequest("/api/account");
+  renderAccountState();
+}
+
+async function finishSignIn(session) {
+  setSession(session);
+  elements.authDialog.close();
+  await loadAccount();
+  await syncCloudState();
+  renderAccountState();
+  showToast("Signed in. Cloud save is on.");
+}
+
+async function submitAuth(action) {
+  const email = elements.authEmail.value.trim();
+  const password = elements.authPassword.value;
+  elements.authMessage.textContent = action === "signup" ? "Creating account..." : "Signing in...";
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, email, password }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Authentication failed");
+    if (!data.access_token) {
+      elements.authMessage.textContent = "Check your email to confirm the account, then sign in.";
+      return;
+    }
+    elements.authMessage.textContent = "";
+    await finishSignIn(data);
+  } catch (error) {
+    elements.authMessage.textContent = error.message;
+  }
+}
+
+function signOut(showMessage = true) {
+  authState.session = null;
+  authState.profile = null;
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  elements.accountDialog.close();
+  renderAccountState();
+  if (showMessage) showToast("Signed out. Local saving remains on.");
+}
+
+function openUpgradeDialog(message = "") {
+  elements.upgradeMessage.textContent = message;
+  elements.upgradeDialog.showModal();
+}
+
+async function startCheckout() {
+  if (!authState.session?.access_token) {
+    elements.upgradeDialog.close();
+    elements.authDialog.showModal();
+    elements.authMessage.textContent = "Create an account or sign in before upgrading.";
+    return;
+  }
+  elements.checkoutButton.disabled = true;
+  elements.upgradeMessage.textContent = "Opening secure checkout...";
+  try {
+    const data = await apiRequest("/api/create-checkout-session", { method: "POST" });
+    window.location.href = data.url;
+  } catch (error) {
+    elements.upgradeMessage.textContent = error.message;
+    elements.checkoutButton.disabled = false;
+  }
+}
+
+async function openBillingPortal() {
+  elements.accountMessage.textContent = "Opening billing...";
+  try {
+    const data = await apiRequest("/api/create-portal-session", { method: "POST" });
+    window.location.href = data.url;
+  } catch (error) {
+    elements.accountMessage.textContent = error.message;
+  }
 }
 
 function updateActiveNote(changes) {
@@ -441,7 +668,7 @@ function downloadFile(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
-function exportCurrentNote(format) {
+async function exportCurrentNote(format) {
   const note = getActiveNote();
   const baseName = sanitizeFilename(note.title);
 
@@ -458,6 +685,20 @@ function exportCurrentNote(format) {
   }
 
   if (format === "pdf") {
+    if (!authState.session?.access_token) {
+      openUpgradeDialog("PDF export is included with Pro.");
+      return;
+    }
+    try {
+      await loadAccount();
+    } catch (error) {
+      showToast(error.message);
+      return;
+    }
+    if (!isPro()) {
+      openUpgradeDialog("PDF export is included with Pro.");
+      return;
+    }
     openPrintExport(note);
   }
 }
@@ -504,6 +745,10 @@ function escapeHtml(value) {
 }
 
 function createNewNote() {
+  if (!isPro() && state.notes.length >= FREE_NOTE_LIMIT) {
+    openUpgradeDialog(`Free accounts can keep up to ${FREE_NOTE_LIMIT} notes.`);
+    return;
+  }
   const id = `draft-${Date.now()}`;
   const now = formatDateNow();
   const note = {
@@ -575,6 +820,10 @@ function saveNotebookFromDialog() {
 
 function saveVersion() {
   const note = getActiveNote();
+  if (!isPro() && note.history.length >= FREE_HISTORY_LIMIT) {
+    openUpgradeDialog(`Free accounts keep ${FREE_HISTORY_LIMIT} versions per note.`);
+    return;
+  }
   const now = formatDateNow();
   note.history.unshift({
     label: `Saved ${now}`,
@@ -582,7 +831,7 @@ function saveVersion() {
     body: note.body,
     modified: now,
   });
-  note.history = note.history.slice(0, 10);
+  note.history = note.history.slice(0, isPro() ? 50 : FREE_HISTORY_LIMIT);
   saveState("Version saved");
   renderEditor();
   showToast("Draft version saved.");
@@ -767,6 +1016,31 @@ elements.inspectorExportButton.addEventListener("click", openExportDialog);
 elements.addNotebookButton.addEventListener("click", () => openNotebookDialog("create"));
 elements.renameNotebookButton.addEventListener("click", () => openNotebookDialog("rename"));
 elements.saveVersionButton.addEventListener("click", saveVersion);
+elements.accountButton.addEventListener("click", () => {
+  if (authState.session?.access_token) {
+    renderAccountState();
+    elements.accountDialog.showModal();
+  } else {
+    elements.authMessage.textContent = "";
+    elements.authDialog.showModal();
+  }
+});
+elements.upgradeButton.addEventListener("click", () => openUpgradeDialog());
+elements.accountUpgradeButton.addEventListener("click", () => {
+  elements.accountDialog.close();
+  openUpgradeDialog();
+});
+elements.authForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitAuth("login");
+});
+elements.signUpButton.addEventListener("click", () => submitAuth("signup"));
+elements.signOutButton.addEventListener("click", () => signOut());
+elements.checkoutButton.addEventListener("click", startCheckout);
+elements.billingButton.addEventListener("click", openBillingPortal);
+elements.closeAuthButton.addEventListener("click", () => elements.authDialog.close());
+elements.closeAccountButton.addEventListener("click", () => elements.accountDialog.close());
+elements.closeUpgradeButton.addEventListener("click", () => elements.upgradeDialog.close());
 
 elements.historyList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-history-index]");
@@ -776,7 +1050,7 @@ elements.historyList.addEventListener("click", (event) => {
 
 elements.exportDialog.addEventListener("close", () => {
   if (!elements.exportDialog.returnValue || elements.exportDialog.returnValue === "close") return;
-  exportCurrentNote(elements.exportDialog.returnValue);
+  void exportCurrentNote(elements.exportDialog.returnValue);
   elements.exportDialog.returnValue = "";
 });
 
@@ -788,3 +1062,20 @@ elements.notebookDialog.addEventListener("close", () => {
 });
 
 render();
+
+if (authState.session?.access_token) {
+  loadAccount()
+    .then(syncCloudState)
+    .catch((error) => {
+      elements.cloudState.textContent = "Cloud error";
+      showToast(error.message);
+    });
+}
+
+const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
+if (checkoutResult === "success") {
+  showToast("Payment received. Activating Pro...");
+  setTimeout(() => {
+    loadAccount().then(renderAccountState).catch(() => {});
+  }, 1200);
+}

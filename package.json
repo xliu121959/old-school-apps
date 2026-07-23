@@ -1,0 +1,15 @@
+{
+  "name": "old-school-apps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Old School Apps catalog and Typewriter Notes web app",
+  "scripts": {
+    "check": "node --check typewriter-notes.js && node --check script.js"
+  },
+  "dependencies": {
+    "stripe": "^22.3.2"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
