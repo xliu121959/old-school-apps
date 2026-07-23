@@ -683,11 +683,7 @@ h1 {
 }
 
 .download-actions .web-app-link {
-  width: 100%;
-  min-height: 40px;
   order: -1;
-  color: #fff;
-  background: linear-gradient(90deg, var(--title-blue), var(--title-blue-2));
 }
 
 .featured-actions {
