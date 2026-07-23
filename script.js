@@ -30,11 +30,11 @@ const apps = [
       },
       {
         action: "Download for Windows",
-        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.1.0/Typewriter.Notes.Setup-0.1.0.exe",
+        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.2.0/Typewriter.Notes.Setup-0.2.0.exe",
       },
       {
         action: "Download for Mac",
-        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.1.0/Typewriter.Notes-0.1.0.dmg",
+        link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.2.0/Typewriter.Notes-0.2.0.dmg",
       },
     ],
     icon: "typewriter",
