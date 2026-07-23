@@ -132,7 +132,10 @@ function renderAppCard(app) {
   const featureItems = app.features.map((feature) => `<li>${feature}</li>`).join("");
   const downloads = app.downloads || [{ action: app.action, link: app.link }];
   const downloadLinks = downloads
-    .map((download) => `<a class="download-link" href="${download.link}">${download.action}</a>`)
+    .map((download) => {
+      const actionClass = download.action === "Open Web App" ? " web-app-link" : "";
+      return `<a class="download-link${actionClass}" href="${download.link}">${download.action}</a>`;
+    })
     .join("");
 
   return `
