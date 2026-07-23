@@ -10,7 +10,7 @@ module.exports = async function handler(request, response) {
     const profile = await ensureProfile(user);
 
     if (profile.plan === "pro") {
-      return json(response, 409, { error: "This account already has Pro" });
+      return json(response, 409, { error: "This account already has the Old School Apps Pass" });
     }
 
     let customerId = profile.stripe_customer_id;
@@ -34,7 +34,10 @@ module.exports = async function handler(request, response) {
       line_items: [{ price: requiredEnv("STRIPE_PRICE_ID"), quantity: 1 }],
       allow_promotion_codes: true,
       client_reference_id: user.id,
-      subscription_data: { metadata: { supabase_user_id: user.id } },
+      metadata: { product: "old_school_apps_pass", supabase_user_id: user.id },
+      subscription_data: {
+        metadata: { product: "old_school_apps_pass", supabase_user_id: user.id },
+      },
       success_url: `${baseUrl}/typewriter-notes.html?checkout=success`,
       cancel_url: `${baseUrl}/typewriter-notes.html?checkout=cancelled`,
     });

@@ -37,7 +37,7 @@
           </select>
         </label>
         <span class="command-spacer"></span>
-        <button class="bevel-button pro-button" id="upgradeButton" type="button">Get Pro</button>
+        <button class="bevel-button pro-button" id="upgradeButton" type="button">Apps Pass</button>
         <button class="bevel-button" id="accountButton" type="button">Sign In</button>
         <div class="format-tools" aria-label="Formatting controls">
           <button class="bevel-button small" data-format="# " type="button">H1</button>
@@ -160,7 +160,7 @@
         <div class="export-options">
           <button class="bevel-button" value="txt" type="submit">TXT</button>
           <button class="bevel-button" value="markdown" type="submit">Markdown</button>
-          <button class="bevel-button" value="pdf" type="submit">PDF <span class="pro-mark">PRO</span></button>
+          <button class="bevel-button" value="pdf" type="submit">PDF <span class="pro-mark">PASS</span></button>
         </div>
       </form>
     </dialog>
@@ -220,7 +220,7 @@
       </div>
       <p class="dialog-message" id="accountMessage" role="status"></p>
       <div class="export-options">
-        <button class="bevel-button pro-button" id="accountUpgradeButton" type="button">Upgrade to Pro</button>
+        <button class="bevel-button pro-button" id="accountUpgradeButton" type="button">Get Apps Pass</button>
         <button class="bevel-button" id="billingButton" type="button" hidden>Manage Billing</button>
         <button class="bevel-button" id="signOutButton" type="button">Sign Out</button>
       </div>
@@ -229,8 +229,8 @@
     <dialog class="export-dialog upgrade-dialog" id="upgradeDialog">
       <div class="dialog-header">
         <div>
-          <h2>Typewriter Notes Pro</h2>
-          <p>Unlock the complete writing desk.</p>
+          <h2>Old School Apps Pass</h2>
+          <p>Every app. One subscription. $20/month.</p>
         </div>
         <button class="bevel-button small" id="closeUpgradeButton" type="button">Close</button>
       </div>
@@ -238,9 +238,10 @@
         <li>PDF export</li>
         <li>Unlimited draft history</li>
         <li>Unlimited notes</li>
+        <li>Paid features in every Old School app</li>
       </ul>
       <p class="dialog-message" id="upgradeMessage" role="status"></p>
-      <button class="bevel-button pro-button wide" id="checkoutButton" type="button">Subscribe with Stripe</button>
+      <button class="bevel-button pro-button wide" id="checkoutButton" type="button">Subscribe - $20/month</button>
     </dialog>
 
     <input id="importInput" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" multiple hidden />

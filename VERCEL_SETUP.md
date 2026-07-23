@@ -11,8 +11,8 @@ The application code is ready for Vercel. Complete these account-side steps once
 
 ## 2. Create the Stripe subscription
 
-1. Create a Stripe product named `Typewriter Notes Pro`.
-2. Add a recurring monthly price and copy its `price_...` ID.
+1. Create a Stripe product named `Old School Apps Pass`.
+2. Add a recurring monthly price of `$20 USD` and copy its `price_...` ID.
 3. After the first Vercel deployment, create a webhook endpoint:
    `https://old-school-apps.com/api/stripe-webhook`
 4. Subscribe the webhook to:

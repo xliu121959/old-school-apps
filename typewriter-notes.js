@@ -407,9 +407,9 @@ function renderAccountState() {
   const pro = isPro();
   elements.accountButton.textContent = signedIn ? "Account" : "Sign In";
   elements.upgradeButton.hidden = pro;
-  elements.cloudState.textContent = signedIn ? (pro ? "Cloud / Pro" : "Cloud / Free") : "Local only";
+  elements.cloudState.textContent = signedIn ? (pro ? "Cloud / Pass" : "Cloud / Free") : "Local only";
   elements.accountEmail.textContent = authState.profile?.email || authState.session?.user?.email || "";
-  elements.accountPlan.textContent = pro ? "Pro" : "Free";
+  elements.accountPlan.textContent = pro ? "Apps Pass" : "Free";
   elements.accountUpgradeButton.hidden = pro;
   elements.billingButton.hidden = !authState.profile?.canManageBilling;
 }
@@ -509,7 +509,7 @@ async function saveCloudState() {
       method: "PUT",
       body: JSON.stringify({ state }),
     });
-    elements.cloudState.textContent = isPro() ? "Cloud / Pro" : "Cloud / Free";
+    elements.cloudState.textContent = isPro() ? "Cloud / Pass" : "Cloud / Free";
   } catch (error) {
     elements.cloudState.textContent = "Cloud error";
     showToast(error.message);
@@ -686,7 +686,7 @@ async function exportCurrentNote(format) {
 
   if (format === "pdf") {
     if (!authState.session?.access_token) {
-      openUpgradeDialog("PDF export is included with Pro.");
+      openUpgradeDialog("PDF export is included with the Old School Apps Pass.");
       return;
     }
     try {
@@ -696,7 +696,7 @@ async function exportCurrentNote(format) {
       return;
     }
     if (!isPro()) {
-      openUpgradeDialog("PDF export is included with Pro.");
+      openUpgradeDialog("PDF export is included with the Old School Apps Pass.");
       return;
     }
     openPrintExport(note);
@@ -1073,9 +1073,13 @@ if (authState.session?.access_token) {
 }
 
 const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
+const requestedUpgrade = new URLSearchParams(window.location.search).get("upgrade");
 if (checkoutResult === "success") {
-  showToast("Payment received. Activating Pro...");
+  showToast("Payment received. Activating your Apps Pass...");
   setTimeout(() => {
     loadAccount().then(renderAccountState).catch(() => {});
   }, 1200);
+}
+if (requestedUpgrade === "pass") {
+  openUpgradeDialog();
 }
