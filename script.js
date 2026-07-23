@@ -25,6 +25,10 @@ const apps = [
     status: "Available",
     downloads: [
       {
+        action: "Open Web App",
+        link: "typewriter-notes.html",
+      },
+      {
         action: "Download for Windows",
         link: "https://github.com/xliu121959/typewriter-notes-desktop/releases/download/v0.1.0/Typewriter.Notes.Setup-0.1.0.exe",
       },

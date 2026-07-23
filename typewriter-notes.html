@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Typewriter Notes is a focused, old-school writing app prototype with tactile controls, paper drafts, and local autosave."
+    />
+    <title>Typewriter Notes</title>
+    <link rel="stylesheet" href="typewriter-notes.css" />
+  </head>
+  <body data-theme="classic">
+    <div class="app-window">
+      <header class="title-bar">
+        <div class="app-title">
+          <span class="document-icon" aria-hidden="true">T</span>
+          <strong>Typewriter Notes</strong>
+        </div>
+        <div class="window-buttons" aria-hidden="true">
+          <span>_</span><span>□</span><span>×</span>
+        </div>
+      </header>
+
+      <nav class="command-bar" aria-label="Writing commands">
+        <a class="bevel-button catalog-link" href="index.html">Catalog</a>
+        <button class="bevel-button" id="newNoteButton" type="button">New Note <span>⌘N</span></button>
+        <button class="bevel-button" id="importButton" type="button">Import</button>
+        <button class="bevel-button" id="exportButton" type="button">Export <span>⌘E</span></button>
+        <button class="bevel-button" id="saveVersionButton" type="button">Save Version</button>
+        <button class="bevel-button" id="focusButton" type="button">Focus Mode</button>
+        <label class="theme-control">
+          <span>Theme</span>
+          <select id="themeSelect">
+            <option value="classic">Classic</option>
+            <option value="dark">Dark Classic</option>
+          </select>
+        </label>
+        <button class="bevel-button" type="button">Settings</button>
+        <div class="format-tools" aria-label="Formatting controls">
+          <button class="bevel-button small" data-format="# " type="button">H1</button>
+          <button class="bevel-button small" data-format="## " type="button">H2</button>
+          <button class="bevel-button small" data-wrap="**" type="button">B</button>
+          <button class="bevel-button small" data-wrap="*" type="button">I</button>
+          <button class="bevel-button small" data-format="- " type="button">List</button>
+        </div>
+      </nav>
+
+      <main class="workspace">
+        <aside class="library-panel" id="sidebar">
+          <div class="panel-heading">
+            <h2>Library</h2>
+            <div class="heading-actions">
+              <button class="square-button" id="renameNotebookButton" type="button" aria-label="Rename notebook">R</button>
+              <button class="square-button" id="addNotebookButton" type="button" aria-label="Add notebook">+</button>
+            </div>
+          </div>
+          <label class="search-box">
+            <span>Search</span>
+            <input id="searchInput" type="search" placeholder="Find notes" autocomplete="off" />
+          </label>
+          <div class="folder-list" id="folderList"></div>
+        </aside>
+
+        <aside class="notes-panel">
+          <div class="panel-heading">
+            <h2>Notes</h2>
+            <span id="notesTotal">0</span>
+          </div>
+          <div class="note-list" id="noteList"></div>
+        </aside>
+
+        <section class="editor-panel" aria-label="Writing editor">
+          <div class="editor-header">
+            <div class="editor-title-area">
+              <input id="noteTitle" class="note-title-input" aria-label="Note title" />
+              <p><span id="activeNotebookLabel">Journal</span> / modified <span id="modifiedLabel">Today</span></p>
+            </div>
+            <label class="sound-control">
+              <input id="soundToggle" type="checkbox" />
+              <span>Typewriter sound</span>
+            </label>
+          </div>
+          <div class="paper-frame">
+            <textarea id="editor" aria-label="Note body" spellcheck="true"></textarea>
+          </div>
+        </section>
+
+        <aside class="inspector-panel">
+          <div class="panel-heading">
+            <h2>Inspector</h2>
+          </div>
+
+          <section class="inspector-section">
+            <h3>Tags</h3>
+            <div id="tagList" class="tag-list"></div>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Appearance</h3>
+            <div class="appearance-controls">
+              <label>
+                <span>Text size</span>
+                <input id="fontSizeControl" type="range" min="14" max="28" step="1" value="20" />
+                <output id="fontSizeValue">20px</output>
+              </label>
+              <label>
+                <span>Font</span>
+                <select id="fontFamilyControl">
+                  <option value="Courier New">Courier New</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Arial">Arial</option>
+                </select>
+              </label>
+              <label>
+                <span>Text color</span>
+                <input id="inkColorControl" type="color" value="#111111" />
+              </label>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Dates</h3>
+            <dl class="date-list">
+              <div><dt>Created</dt><dd id="createdLabel">Jul 10, 2026</dd></div>
+              <div><dt>Modified</dt><dd id="dateModifiedLabel">Today</dd></div>
+            </dl>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Draft History</h3>
+            <div id="historyList" class="history-list"></div>
+          </section>
+
+          <section class="inspector-section">
+            <h3>Export</h3>
+            <button class="bevel-button wide" id="inspectorExportButton" type="button">Choose format</button>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="status-bar">
+        <span id="wordCount">0 words</span>
+        <span id="charCount">0 characters</span>
+        <span id="themeState">Classic</span>
+        <span id="soundState">Sound off</span>
+        <span id="savedState">Saved</span>
+      </footer>
+    </div>
+
+    <dialog class="export-dialog" id="exportDialog">
+      <form method="dialog">
+        <div class="dialog-header">
+          <h2>Choose export format</h2>
+          <button class="bevel-button small" value="close" type="submit">Close</button>
+        </div>
+        <div class="export-options">
+          <button class="bevel-button" value="txt" type="submit">TXT</button>
+          <button class="bevel-button" value="markdown" type="submit">Markdown</button>
+          <button class="bevel-button" value="pdf" type="submit">PDF</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="export-dialog" id="notebookDialog">
+      <form method="dialog">
+        <div class="dialog-header">
+          <h2 id="notebookDialogTitle">New notebook</h2>
+          <button class="bevel-button small" value="close" type="submit">Close</button>
+        </div>
+        <label class="dialog-field">
+          <span>Notebook name</span>
+          <input id="notebookNameInput" type="text" autocomplete="off" />
+        </label>
+        <div class="export-options">
+          <button class="bevel-button" value="save" type="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <input id="importInput" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" multiple hidden />
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="typewriter-notes.js"></script>
+  </body>
+</html>
