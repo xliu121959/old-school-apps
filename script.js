@@ -59,11 +59,11 @@ const apps = [
   {
     name: "Desk Calendar Planner",
     tagline: "Plan the week on a clean paper desk pad.",
-    features: ["Desk calendar layout", "Drag-to-reschedule tasks", "Monthly tear-off archive"],
-    platform: "iOS",
-    status: "Coming Soon",
-    action: "Join Waitlist",
-    link: "https://example.com/desk-calendar-planner/waitlist",
+    features: ["Daily and weekly planning", "Tasks, events, and sticky notes", "Four classic office themes"],
+    platform: "Web",
+    status: "Available",
+    action: "Open Web App",
+    link: "desk-calendar-planner.html",
     icon: "calendar",
   },
 ];

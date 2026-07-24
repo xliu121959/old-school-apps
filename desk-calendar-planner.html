@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Desk Calendar Planner - a tactile daily and weekly planning web app." />
+    <title>Desk Calendar Planner</title>
+    <link rel="stylesheet" href="desk-calendar-planner.css" />
+  </head>
+  <body data-theme="classic">
+    <div class="planner-app">
+      <header class="app-titlebar">
+        <div class="app-identity">
+          <span class="calendar-app-icon" aria-hidden="true"><span></span></span>
+          <strong>Desk Calendar Planner</strong>
+        </div>
+        <div class="window-buttons" aria-hidden="true">
+          <span>_</span><span>[]</span><span>X</span>
+        </div>
+      </header>
+
+      <nav class="toolbar" aria-label="Planner toolbar">
+        <button class="office-button" id="todayButton" type="button">Today</button>
+        <button class="office-button" id="newTaskButton" type="button">New Task</button>
+        <button class="office-button" id="newEventButton" type="button">New Event</button>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <label class="toolbar-label" for="themeSelect">Theme</label>
+        <select class="office-select" id="themeSelect">
+          <option value="classic">Classic Desk</option>
+          <option value="night">Night Office</option>
+          <option value="school">School Planner</option>
+          <option value="executive">Executive Ledger</option>
+        </select>
+        <div class="view-switch" role="group" aria-label="Planner view">
+          <button class="office-button active" data-view="day" type="button">Day</button>
+          <button class="office-button" data-view="week" type="button">Week</button>
+        </div>
+        <button class="office-button settings-button" id="settingsButton" type="button">Settings</button>
+        <a class="office-button catalog-button" href="index.html">App Catalog</a>
+      </nav>
+
+      <div class="workspace">
+        <aside class="left-sidebar">
+          <section class="sidebar-section month-section">
+            <div class="panel-heading">
+              <button class="flat-button" id="previousMonthButton" type="button" aria-label="Previous month">&lt;</button>
+              <strong id="miniMonthTitle"></strong>
+              <button class="flat-button" id="nextMonthButton" type="button" aria-label="Next month">&gt;</button>
+            </div>
+            <div class="mini-calendar" id="miniCalendar" aria-label="Month calendar"></div>
+          </section>
+
+          <section class="sidebar-section">
+            <label class="field-label" for="taskSearch">Find tasks</label>
+            <input id="taskSearch" type="search" placeholder="Search this planner" autocomplete="off" />
+          </section>
+
+          <section class="sidebar-section planner-sections">
+            <h2>Planner</h2>
+            <button class="section-link active" data-section="selected" type="button">
+              <span>Selected day</span><strong id="selectedTaskCount">0</strong>
+            </button>
+            <button class="section-link" data-section="week" type="button">
+              <span>This week</span><strong id="weekTaskCount">0</strong>
+            </button>
+            <button class="section-link" data-section="open" type="button">
+              <span>Open tasks</span><strong id="openTaskCount">0</strong>
+            </button>
+            <button class="section-link" data-section="priority" type="button">
+              <span>High priority</span><strong id="priorityTaskCount">0</strong>
+            </button>
+          </section>
+
+          <section class="sidebar-section legend">
+            <h2>Desk Marks</h2>
+            <p><span class="legend-mark priority-mark"></span> Red stamp: high priority</p>
+            <p><span class="legend-mark event-mark"></span> Blue rule: appointment</p>
+            <p><span class="legend-mark done-mark"></span> Pen line: completed</p>
+          </section>
+        </aside>
+
+        <main class="planner-main">
+          <div class="week-strip" id="weekStrip" aria-label="Select a day"></div>
+
+          <section class="day-page" id="dayView">
+            <header class="tearoff-heading">
+              <div class="date-block">
+                <span id="pageMonth"></span>
+                <strong id="pageDay"></strong>
+              </div>
+              <div class="date-copy">
+                <p id="pageWeekday"></p>
+                <h1 id="pageDateTitle"></h1>
+                <span id="pageSummary"></span>
+              </div>
+              <div class="binder-clips" aria-hidden="true"><span></span><span></span></div>
+            </header>
+
+            <div class="paper-body">
+              <section class="task-column">
+                <div class="paper-section-heading">
+                  <h2>Things To Do</h2>
+                  <span id="taskProgressText">0 of 0 complete</span>
+                </div>
+                <div class="task-list" id="taskList"></div>
+                <button class="paper-add-button" id="inlineTaskButton" type="button">+ Add another task</button>
+              </section>
+
+              <section class="timeline-column">
+                <div class="paper-section-heading">
+                  <h2>Appointments</h2>
+                  <span id="eventCountText">0 scheduled</span>
+                </div>
+                <div class="timeline" id="eventTimeline"></div>
+                <button class="paper-add-button" id="inlineEventButton" type="button">+ Add appointment</button>
+
+                <div class="sticky-note-wrap">
+                  <label for="stickyNote">Quick note</label>
+                  <textarea id="stickyNote" maxlength="500" placeholder="Pin a note to this day..."></textarea>
+                  <span class="tape-strip" aria-hidden="true"></span>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="week-board" id="weekView" hidden>
+            <div class="week-board-heading">
+              <div>
+                <span class="stamp">WEEK PLAN</span>
+                <h1 id="weekTitle"></h1>
+              </div>
+              <p id="weekSummary"></p>
+            </div>
+            <div class="week-columns" id="weekColumns"></div>
+          </section>
+        </main>
+
+        <aside class="right-panel">
+          <section class="inspector-section">
+            <h2>Day File</h2>
+            <dl class="day-details">
+              <div><dt>Date</dt><dd id="detailDate"></dd></div>
+              <div><dt>Tasks</dt><dd id="detailTasks"></dd></div>
+              <div><dt>Events</dt><dd id="detailEvents"></dd></div>
+            </dl>
+          </section>
+
+          <section class="inspector-section">
+            <h2>Tags</h2>
+            <div class="tag-list" id="tagList"></div>
+          </section>
+
+          <section class="inspector-section">
+            <h2>Priorities</h2>
+            <div class="priority-summary" id="prioritySummary"></div>
+          </section>
+
+          <section class="inspector-section reminders">
+            <h2>Reminders</h2>
+            <div id="reminderList"></div>
+          </section>
+
+          <section class="inspector-section">
+            <h2>Recurring</h2>
+            <label class="check-row">
+              <input id="carryTasksToggle" type="checkbox" />
+              <span>Carry open tasks to tomorrow</span>
+            </label>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="status-bar">
+        <span id="statusDate"></span>
+        <span id="statusTasks"></span>
+        <span id="statusCompleted"></span>
+        <span class="save-state" id="saveState">Saved locally</span>
+      </footer>
+    </div>
+
+    <dialog class="office-dialog" id="taskDialog">
+      <form method="dialog" id="taskForm">
+        <div class="dialog-titlebar">
+          <strong id="taskDialogTitle">New Task</strong>
+          <button class="dialog-close" value="cancel" type="submit" aria-label="Close">X</button>
+        </div>
+        <div class="dialog-body">
+          <label>
+            Task
+            <input id="taskTitleInput" maxlength="120" required />
+          </label>
+          <label>
+            Tags
+            <input id="taskTagsInput" maxlength="80" placeholder="work, errands" />
+          </label>
+          <label class="check-row dialog-check">
+            <input id="taskPriorityInput" type="checkbox" />
+            <span>Mark high priority</span>
+          </label>
+          <div class="dialog-actions">
+            <button class="office-button" value="cancel" type="submit">Cancel</button>
+            <button class="office-button primary" id="saveTaskButton" value="default" type="submit">Save Task</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="office-dialog" id="eventDialog">
+      <form method="dialog" id="eventForm">
+        <div class="dialog-titlebar">
+          <strong id="eventDialogTitle">New Event</strong>
+          <button class="dialog-close" value="cancel" type="submit" aria-label="Close">X</button>
+        </div>
+        <div class="dialog-body">
+          <label>
+            Time
+            <input id="eventTimeInput" type="time" required />
+          </label>
+          <label>
+            Event title
+            <input id="eventTitleInput" maxlength="120" required />
+          </label>
+          <label>
+            Reminder
+            <select id="eventReminderInput">
+              <option value="none">None</option>
+              <option value="10">10 minutes before</option>
+              <option value="30">30 minutes before</option>
+              <option value="60">1 hour before</option>
+            </select>
+          </label>
+          <div class="dialog-actions">
+            <button class="office-button" value="cancel" type="submit">Cancel</button>
+            <button class="office-button primary" id="saveEventButton" value="default" type="submit">Save Event</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="office-dialog settings-dialog" id="settingsDialog">
+      <form method="dialog" id="settingsForm">
+        <div class="dialog-titlebar">
+          <strong>Planner Preferences</strong>
+          <button class="dialog-close" value="cancel" type="submit" aria-label="Close">X</button>
+        </div>
+        <div class="dialog-body">
+          <label>
+            Week starts on
+            <select id="weekStartSelect">
+              <option value="1">Monday</option>
+              <option value="0">Sunday</option>
+            </select>
+          </label>
+          <label class="check-row dialog-check">
+            <input id="showCompletedToggle" type="checkbox" />
+            <span>Show completed tasks</span>
+          </label>
+          <label class="check-row dialog-check">
+            <input id="confirmDeleteToggle" type="checkbox" />
+            <span>Confirm before deleting items</span>
+          </label>
+          <div class="dialog-actions">
+            <button class="office-button primary" value="default" type="submit">Done</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="desk-calendar-planner.js"></script>
+  </body>
+</html>
