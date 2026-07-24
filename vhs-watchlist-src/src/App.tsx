@@ -821,12 +821,19 @@ function App() {
 
   return (
     <div className="video-store-app">
-      <header className="topbar">
-        <button className="mobile-menu" type="button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Menu size={20} /></button>
+      <div className="win98-titlebar">
         <a className="brand" href="../index.html">
           <span className="brand-tape" aria-hidden="true"><i /><i /></span>
-          <span><strong>VHS WATCHLIST</strong><small>Track movies like a rental-store shelf.</small></span>
+          <span><strong>VHS Watchlist</strong><small>Old School Apps</small></span>
         </a>
+        <div className="win98-window-controls" aria-hidden="true">
+          <span>_</span>
+          <span>□</span>
+          <span>×</span>
+        </div>
+      </div>
+      <header className="topbar">
+        <button className="mobile-menu" type="button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Menu size={20} /></button>
         <label className="search-control">
           <Search size={17} />
           <input aria-label="Search movie library" value={state.search} placeholder="Search title, genre, director, label..." onChange={(event) => setState({ ...state, search: event.target.value })} />
