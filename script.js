@@ -31,9 +31,9 @@ const apps = [
     tagline: "Track movies like a rental-store shelf.",
     features: ["Shelf-style collections", "Rental label ratings", "Watched and rewound lists"],
     platform: "Web",
-    status: "Coming Soon",
-    action: "Join Waitlist",
-    link: "https://example.com/vhs-watchlist/waitlist",
+    status: "Available",
+    action: "Open Web App",
+    link: "vhs-watchlist/index.html",
     icon: "vhs",
   },
   {
