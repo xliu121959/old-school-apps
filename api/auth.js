@@ -107,7 +107,7 @@ module.exports = async function handler(request, response) {
         const label = provider === "google" ? "Google" : "Facebook";
         return json(response, 503, { error: `${label} sign-in is not configured yet` });
       }
-      const allowedPaths = new Set(["/", "/index.html", "/typewriter-notes.html", "/desk-calendar-planner.html"]);
+      const allowedPaths = new Set(["/", "/index.html", "/typewriter-notes.html", "/desk-calendar-planner.html", "/vhs-watchlist"]);
       const returnPath = allowedPaths.has(returnTo) ? returnTo : "/typewriter-notes.html";
       const redirectTo = `${siteUrl(request)}${returnPath}?auth=callback`;
       const authorizeUrl = new URL("/auth/v1/authorize", requiredEnv("SUPABASE_URL"));

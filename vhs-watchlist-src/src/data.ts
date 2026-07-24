@@ -280,6 +280,7 @@ export function createDefaultState(): LibraryState {
   return {
     movies: sampleMovies,
     shelves: defaultShelves,
+    theme: "classic",
     view: "shelf",
     sort: "title",
     activeCollection: "all",
@@ -292,5 +293,6 @@ export function createDefaultState(): LibraryState {
       rewound: "all",
     },
     onboardingDismissed: false,
+    clientUpdatedAt: Date.now(),
   };
 }

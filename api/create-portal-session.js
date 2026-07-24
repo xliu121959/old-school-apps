@@ -10,7 +10,7 @@ module.exports = async function handler(request, response) {
     const profile = await ensureProfile(user);
     const customerId = profile.stripe_customer_id;
     if (!customerId) return json(response, 404, { error: "No billing account found" });
-    const allowedReturnPaths = new Set(["/typewriter-notes.html", "/desk-calendar-planner.html", "/index.html"]);
+    const allowedReturnPaths = new Set(["/typewriter-notes.html", "/desk-calendar-planner.html", "/vhs-watchlist", "/index.html"]);
     const returnPath = allowedReturnPaths.has(request.body?.returnTo) ? request.body.returnTo : "/typewriter-notes.html";
 
     const session = await stripe.billingPortal.sessions.create({

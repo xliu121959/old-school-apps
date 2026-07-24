@@ -28,7 +28,7 @@ module.exports = async function handler(request, response) {
     }
 
     const baseUrl = siteUrl(request);
-    const allowedReturnPaths = new Set(["/typewriter-notes.html", "/desk-calendar-planner.html", "/index.html"]);
+    const allowedReturnPaths = new Set(["/typewriter-notes.html", "/desk-calendar-planner.html", "/vhs-watchlist", "/index.html"]);
     const returnPath = allowedReturnPaths.has(request.body?.returnTo) ? request.body.returnTo : "/typewriter-notes.html";
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

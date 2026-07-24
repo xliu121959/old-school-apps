@@ -5,6 +5,7 @@ const FREE_HISTORY_LIMIT = 3;
 const APP_RULES = {
   "typewriter-notes": { proOnly: false },
   "desk-calendar-planner": { proOnly: true },
+  "vhs-watchlist": { proOnly: true },
 };
 
 function hasActivePass(profile) {
@@ -21,7 +22,7 @@ module.exports = async function handler(request, response) {
     if (!rules) return json(response, 400, { error: "Unsupported app state" });
     const profile = await ensureProfile(user);
     if (rules.proOnly && !hasActivePass(profile)) {
-      return json(response, 402, { error: "An active Apps Pass is required for planner cloud sync" });
+      return json(response, 402, { error: "An active Apps Pass is required for cloud sync" });
     }
 
     if (request.method === "GET") {

@@ -261,6 +261,24 @@ a:focus-visible {
   font-weight: 400;
 }
 
+.topbar > .theme-button,
+.topbar > .pass-toolbar-button,
+.topbar > .account-toolbar-button {
+  display: inline-flex;
+  width: auto;
+  min-width: 74px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.topbar > .pass-toolbar-button {
+  min-width: 88px;
+  font-weight: 700;
+}
+
 .topbar > button:hover,
 .topbar .add-movie-button:hover,
 .view-controls button:hover,
@@ -1040,6 +1058,181 @@ a:focus-visible {
   color: #444;
 }
 
+.cloud-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid #808080;
+  color: #555;
+  white-space: nowrap;
+}
+
+.cloud-state.synced {
+  color: #006000;
+  font-weight: 700;
+}
+
+.account-modal {
+  width: min(430px, calc(100vw - 20px));
+}
+
+.account-form,
+.account-body,
+.upgrade-body {
+  padding: 14px;
+}
+
+.account-form {
+  display: grid;
+  gap: 10px;
+}
+
+.account-form > p,
+.account-body > p,
+.upgrade-body > p {
+  margin: 0;
+  color: #333;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.account-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.account-form input {
+  min-height: 28px;
+  padding: 3px 5px;
+  color: #000;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  background: #fff;
+  box-shadow: inset 1px 1px #000;
+}
+
+.social-auth-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.social-auth-buttons button,
+.subscribe-button {
+  min-height: 32px;
+  color: #000;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  background: var(--win98-gray);
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  font-size: 11px;
+}
+
+.auth-divider {
+  position: relative;
+  height: 18px;
+  border-bottom: 1px solid #808080;
+  text-align: center;
+}
+
+.auth-divider span {
+  position: relative;
+  top: 10px;
+  padding: 0 8px;
+  color: #444;
+  background: var(--win98-gray);
+  font-size: 10px;
+}
+
+.account-message {
+  min-height: 16px;
+  color: #800000 !important;
+}
+
+.account-email {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.account-plan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 8px;
+  padding: 8px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  background: #fff;
+  font-size: 11px;
+}
+
+.account-actions {
+  margin-top: 12px;
+}
+
+.upgrade-modal {
+  width: min(610px, calc(100vw - 20px));
+}
+
+.upgrade-price {
+  margin-bottom: 12px !important;
+  text-align: center;
+}
+
+.upgrade-price strong {
+  color: var(--win98-blue);
+  font-size: 24px;
+}
+
+.plan-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.plan-comparison section {
+  padding: 10px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  background: #fff;
+}
+
+.plan-comparison h2 {
+  margin: 0 0 7px;
+  font: 700 13px Tahoma, Arial, sans-serif;
+}
+
+.plan-comparison ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.plan-comparison .pass-plan {
+  color: #fff;
+  border-color: #1084d0 #000 #000 #1084d0;
+  background: var(--win98-blue);
+}
+
+.subscribe-button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
 .onboarding-banner {
   right: 14px;
   bottom: 14px;
@@ -1107,6 +1300,201 @@ a:focus-visible {
   text-transform: none;
 }
 
+.theme-dark {
+  --win98-gray: #454545;
+  --win98-light: #d8d8d8;
+  --win98-mid: #242424;
+  --win98-dark: #101010;
+  --win98-black: #000;
+  --win98-blue: #001f64;
+  --win98-bright-blue: #35678f;
+  --win98-selection: #005a78;
+  color: #f0f0f0;
+  background: #171717;
+  border-top-color: #8b8b8b;
+  border-left-color: #8b8b8b;
+}
+
+.theme-dark .topbar,
+.theme-dark .sidebar,
+.theme-dark .library-heading,
+.theme-dark .details-drawer,
+.theme-dark .modal-window,
+.theme-dark .settings-body,
+.theme-dark .shelf-manager-row,
+.theme-dark .onboarding-banner,
+.theme-dark .filter-bar {
+  color: #f0f0f0;
+  background: #454545;
+}
+
+.theme-dark .library,
+.theme-dark .shelf-view,
+.theme-dark .tape-grid,
+.theme-dark .tape-list {
+  background-color: #242424;
+}
+
+.theme-dark .search-control,
+.theme-dark .filter-bar select,
+.theme-dark .library-heading select,
+.theme-dark .rental-label select,
+.theme-dark .form-grid input,
+.theme-dark .form-grid select,
+.theme-dark .form-grid textarea,
+.theme-dark .new-shelf-row input,
+.theme-dark .shelf-manager-row input,
+.theme-dark .account-form input,
+.theme-dark .account-plan-row {
+  color: #f4f4f4;
+  border-top-color: #111;
+  border-left-color: #111;
+  border-right-color: #888;
+  border-bottom-color: #888;
+  background: #151515;
+  box-shadow: inset 1px 1px #000;
+}
+
+.theme-dark .search-control input,
+.theme-dark .search-control button {
+  color: #f4f4f4;
+  background: #151515;
+}
+
+.theme-dark .search-control input::placeholder {
+  color: #aaa;
+}
+
+.theme-dark .topbar > button,
+.theme-dark .topbar .add-movie-button,
+.theme-dark .topbar .icon-button,
+.theme-dark .view-controls button,
+.theme-dark .icon-button,
+.theme-dark .filter-bar button,
+.theme-dark .empty-library button,
+.theme-dark .drawer-actions button,
+.theme-dark .text-action,
+.theme-dark .return-action,
+.theme-dark .drawer-footer button,
+.theme-dark .modal-actions button,
+.theme-dark .new-shelf-row button,
+.theme-dark .settings-body button,
+.theme-dark .onboarding-banner button,
+.theme-dark .social-auth-buttons button,
+.theme-dark .subscribe-button {
+  color: #f0f0f0;
+  border-top-color: #888;
+  border-left-color: #888;
+  border-right-color: #050505;
+  border-bottom-color: #050505;
+  background: #454545;
+  box-shadow: inset -1px -1px #202020, inset 1px 1px #666;
+}
+
+.theme-dark .topbar > button:hover,
+.theme-dark .topbar .add-movie-button:hover,
+.theme-dark .view-controls button:hover,
+.theme-dark .icon-button:hover,
+.theme-dark .filter-bar button:hover,
+.theme-dark .drawer-actions button:hover,
+.theme-dark .drawer-footer button:hover,
+.theme-dark .modal-actions button:hover,
+.theme-dark .settings-body button:hover,
+.theme-dark .social-auth-buttons button:hover,
+.theme-dark .subscribe-button:hover {
+  color: #fff;
+  background: #575757;
+}
+
+.theme-dark .view-controls,
+.theme-dark .plan-comparison section,
+.theme-dark .new-shelf-row,
+.theme-dark .settings-body section {
+  border-color: #181818 #777 #777 #181818;
+  background: #303030;
+}
+
+.theme-dark .sidebar h2,
+.theme-dark .sidebar button,
+.theme-dark .library-heading h1,
+.theme-dark .library-heading p,
+.theme-dark .library-heading label,
+.theme-dark .drawer-section h3,
+.theme-dark .drawer-section p,
+.theme-dark .settings-body p,
+.theme-dark .account-form > p,
+.theme-dark .account-body > p,
+.theme-dark .upgrade-body > p,
+.theme-dark .form-grid label,
+.theme-dark .filter-bar label {
+  color: #ededed;
+}
+
+.theme-dark .sidebar button:hover {
+  background: #565656;
+}
+
+.theme-dark .sidebar button.active,
+.theme-dark .view-controls .active,
+.theme-dark .topbar > .active,
+.theme-dark .icon-button.active {
+  color: #fff;
+  background: var(--win98-selection);
+}
+
+.theme-dark .rental-shelf {
+  border-color: #777 #101010 #101010 #777;
+  background: #383838;
+}
+
+.theme-dark .shelf-plank {
+  filter: brightness(.65) saturate(.75);
+}
+
+.theme-dark .details-content,
+.theme-dark .rental-label {
+  color: #eee;
+  background: #303030;
+}
+
+.theme-dark .rental-label textarea {
+  color: #f5f5f5;
+  background: #151515;
+}
+
+.theme-dark .label-head strong,
+.theme-dark .upgrade-price strong {
+  color: #7fc8ff;
+}
+
+.theme-dark .auth-divider span {
+  color: #ddd;
+  background: #454545;
+}
+
+.theme-dark .cloud-state {
+  color: #c6c6c6;
+  border-left-color: #777;
+}
+
+.theme-dark .cloud-state.synced {
+  color: #80e890;
+}
+
+.theme-dark .plan-comparison .pass-plan {
+  color: #fff;
+  border-color: #4f7895 #080808 #080808 #4f7895;
+  background: #003b52;
+}
+
+.theme-dark button:focus-visible,
+.theme-dark input:focus-visible,
+.theme-dark select:focus-visible,
+.theme-dark textarea:focus-visible,
+.theme-dark a:focus-visible {
+  outline-color: #fff;
+}
+
 @media (max-width: 900px) {
   :root {
     --sidebar-width: 210px;
@@ -1148,8 +1536,8 @@ a:focus-visible {
 @media (max-width: 640px) {
   :root {
     --titlebar-height: 27px;
-    --toolbar-height: 82px;
-    --topbar-height: 109px;
+    --toolbar-height: 118px;
+    --topbar-height: 145px;
   }
 
   .video-store-app {
@@ -1202,9 +1590,18 @@ a:focus-visible {
     height: 31px;
   }
 
+  .topbar > .theme-button,
+  .topbar > .pass-toolbar-button,
+  .topbar > .account-toolbar-button {
+    width: 31px;
+    min-width: 31px;
+    padding: 0;
+    font-size: 0;
+  }
+
   .view-controls {
     order: 10;
-    margin-left: 36px;
+    margin-left: 0;
   }
 
   .library-heading {
@@ -1255,6 +1652,19 @@ a:focus-visible {
     right: 6px;
     bottom: 6px;
     width: calc(100vw - 12px);
+  }
+
+  .cloud-state {
+    display: flex;
+    width: max-content;
+    margin: 2px 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .social-auth-buttons,
+  .plan-comparison {
+    grid-template-columns: 1fr;
   }
 }
 

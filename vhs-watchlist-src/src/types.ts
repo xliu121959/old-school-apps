@@ -1,4 +1,5 @@
 export type ViewMode = "shelf" | "grid" | "list";
+export type AppTheme = "classic" | "dark";
 export type SortMode = "title" | "year" | "rating" | "dateAdded" | "recentlyWatched";
 export type CollectionFilter = "all" | "new" | "watchNext" | "watched" | "rewound" | "favorites";
 
@@ -43,6 +44,7 @@ export interface Movie {
 export interface LibraryState {
   movies: Movie[];
   shelves: Shelf[];
+  theme: AppTheme;
   view: ViewMode;
   sort: SortMode;
   activeCollection: CollectionFilter;
@@ -55,4 +57,5 @@ export interface LibraryState {
     rewound: "all" | "rewound" | "notRewound";
   };
   onboardingDismissed: boolean;
+  clientUpdatedAt: number;
 }
