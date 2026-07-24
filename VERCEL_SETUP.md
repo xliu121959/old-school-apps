@@ -37,7 +37,7 @@ Enter provider secrets directly in Supabase. Do not put them in this repository.
 ## 2. Create the Stripe subscription
 
 1. Create a Stripe product named `Old School Apps Pass`.
-2. Add a recurring monthly price of `$20 USD` and copy its `price_...` ID.
+2. Add a recurring monthly price of `$10 USD` and copy its `price_...` ID.
 3. After the first Vercel deployment, create a webhook endpoint:
    `https://old-school-apps.com/api/stripe-webhook`
 4. Subscribe the webhook to:
