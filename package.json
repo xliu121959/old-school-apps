@@ -4,7 +4,7 @@
   "private": true,
   "description": "Old School Apps catalog and Typewriter Notes web app",
   "scripts": {
-    "check": "node --check typewriter-notes.js && node --check script.js"
+    "check": "node --check typewriter-notes.js && node --check script.js && node --check api/*.js"
   },
   "dependencies": {
     "stripe": "^22.3.2"

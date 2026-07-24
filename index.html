@@ -38,7 +38,8 @@
           <a href="#featured">Featured</a>
           <a href="#screens">Screens</a>
           <a href="#about">About</a>
-          <a class="pass-link" href="typewriter-notes.html?upgrade=pass">Apps Pass - $20/mo</a>
+          <button class="pass-link" id="catalogPassButton" type="button">Apps Pass - $20/mo</button>
+          <button id="catalogAccountButton" type="button">Sign In</button>
         </nav>
       </header>
 
@@ -96,18 +97,20 @@
                   <span><strong>AI</strong> filing rules</span>
                 </div>
                 <div class="download-actions featured-actions">
-                  <a
+                  <button
                     class="primary-action"
-                    href="https://github.com/xliu121959/doc_organizer/releases/download/v0.1.0/Private.File.Organizer_0.1.0_x64-setup.exe"
+                    data-download-id="retro-file-cabinet-windows"
+                    type="button"
                   >
-                    Download for Windows
-                  </a>
-                  <a
+                    Download for Windows - Pass
+                  </button>
+                  <button
                     class="primary-action"
-                    href="https://github.com/xliu121959/doc_organizer/releases/download/v0.1.0/Private.File.Organizer_0.1.0_aarch64.dmg"
+                    data-download-id="retro-file-cabinet-mac"
+                    type="button"
                   >
-                    Download for Mac
-                  </a>
+                    Download for Mac - Pass
+                  </button>
                 </div>
               </div>
             </div>
@@ -208,6 +211,74 @@
       </footer>
     </div>
 
-    <script src="script.js?v=20260723-typewriter-v020"></script>
+    <dialog class="catalog-dialog" id="catalogAuthDialog">
+      <form id="catalogAuthForm">
+        <div class="catalog-dialog-titlebar">
+          <strong>Old School Apps - Sign In</strong>
+          <button class="window-close" id="closeCatalogAuthButton" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="catalog-dialog-body">
+          <p>Sign in to subscribe and unlock desktop downloads.</p>
+          <div class="social-auth">
+            <button class="primary-action social-login" data-provider="google" type="button">Sign in with Google</button>
+            <button class="primary-action social-login" data-provider="facebook" type="button">Sign in with Facebook</button>
+          </div>
+          <div class="auth-divider"><span>or use email</span></div>
+          <label class="catalog-field">
+            <span>Email</span>
+            <input id="catalogAuthEmail" type="email" autocomplete="email" required />
+          </label>
+          <label class="catalog-field">
+            <span>Password</span>
+            <input id="catalogAuthPassword" type="password" autocomplete="current-password" minlength="8" required />
+          </label>
+          <p class="catalog-message" id="catalogAuthMessage" role="status"></p>
+          <div class="catalog-dialog-actions">
+            <button class="primary-action" type="submit">Sign In</button>
+            <button class="primary-action" id="catalogSignUpButton" type="button">Create Account</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="catalog-dialog" id="catalogAccountDialog">
+      <div class="catalog-dialog-titlebar">
+        <strong>Old School Apps - Account</strong>
+        <button class="window-close" id="closeCatalogAccountButton" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="catalog-dialog-body">
+        <p id="catalogAccountEmail"></p>
+        <div class="catalog-account-summary">
+          <span>Current plan</span>
+          <strong id="catalogAccountPlan">Free</strong>
+        </div>
+        <p class="catalog-message" id="catalogAccountMessage" role="status"></p>
+        <div class="catalog-dialog-actions">
+          <button class="primary-action pass-action" id="catalogAccountUpgradeButton" type="button">Get Apps Pass</button>
+          <button class="primary-action" id="catalogBillingButton" type="button" hidden>Manage Billing</button>
+          <button class="primary-action" id="catalogSignOutButton" type="button">Sign Out</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="catalog-dialog" id="catalogUpgradeDialog">
+      <div class="catalog-dialog-titlebar">
+        <strong>Old School Apps Pass</strong>
+        <button class="window-close" id="closeCatalogUpgradeButton" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="catalog-dialog-body">
+        <p><strong>Every desktop app. One subscription. $20/month.</strong></p>
+        <ul class="catalog-pass-list">
+          <li>Retro File Cabinet for Windows and Mac</li>
+          <li>Typewriter Notes for Windows and Mac</li>
+          <li>All future desktop app releases</li>
+          <li>Paid features and unlimited cloud writing</li>
+        </ul>
+        <p class="catalog-message" id="catalogUpgradeMessage" role="status"></p>
+        <button class="primary-action pass-action wide-action" id="catalogCheckoutButton" type="button">Subscribe - $20/month</button>
+      </div>
+    </dialog>
+
+    <script src="script.js?v=20260724-paid-downloads"></script>
   </body>
 </html>

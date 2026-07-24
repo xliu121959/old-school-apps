@@ -161,6 +161,7 @@ const elements = {
   authEmail: document.querySelector("#authEmail"),
   authPassword: document.querySelector("#authPassword"),
   authMessage: document.querySelector("#authMessage"),
+  socialLoginButtons: document.querySelectorAll(".social-login"),
   signUpButton: document.querySelector("#signUpButton"),
   closeAuthButton: document.querySelector("#closeAuthButton"),
   accountDialog: document.querySelector("#accountDialog"),
@@ -501,6 +502,28 @@ function setSession(session) {
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
 }
 
+function readOAuthCallback() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  const error = params.get("error_description");
+  if (error) {
+    elements.authDialog.showModal();
+    elements.authMessage.textContent = error;
+    history.replaceState({}, "", `${window.location.pathname}${window.location.search}`);
+    return;
+  }
+  if (!accessToken) return;
+  const expiresIn = Number(params.get("expires_in")) || 3600;
+  setSession({
+    access_token: accessToken,
+    refresh_token: params.get("refresh_token"),
+    token_type: params.get("token_type") || "bearer",
+    expires_in: expiresIn,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+  });
+  history.replaceState({}, "", window.location.pathname);
+}
+
 async function saveCloudState() {
   if (!authState.session?.access_token) return;
   elements.cloudState.textContent = "Cloud saving...";
@@ -563,6 +586,22 @@ async function submitAuth(action) {
     }
     elements.authMessage.textContent = "";
     await finishSignIn(data);
+  } catch (error) {
+    elements.authMessage.textContent = error.message;
+  }
+}
+
+async function startOAuth(provider) {
+  elements.authMessage.textContent = `Opening ${provider === "google" ? "Google" : "Facebook"}...`;
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "oauth", provider, returnTo: "/typewriter-notes.html" }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Social sign-in is unavailable");
+    window.location.assign(data.url);
   } catch (error) {
     elements.authMessage.textContent = error.message;
   }
@@ -1035,6 +1074,9 @@ elements.authForm.addEventListener("submit", (event) => {
   submitAuth("login");
 });
 elements.signUpButton.addEventListener("click", () => submitAuth("signup"));
+elements.socialLoginButtons.forEach((button) => {
+  button.addEventListener("click", () => startOAuth(button.dataset.provider));
+});
 elements.signOutButton.addEventListener("click", () => signOut());
 elements.checkoutButton.addEventListener("click", startCheckout);
 elements.billingButton.addEventListener("click", openBillingPortal);
@@ -1061,6 +1103,7 @@ elements.notebookDialog.addEventListener("close", () => {
   elements.notebookDialog.returnValue = "";
 });
 
+readOAuthCallback();
 render();
 
 if (authState.session?.access_token) {

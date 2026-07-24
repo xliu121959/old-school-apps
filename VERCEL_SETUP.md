@@ -7,7 +7,32 @@ The application code is ready for Vercel. Complete these account-side steps once
 1. Create a Supabase project.
 2. Open **SQL Editor**, paste `supabase/schema.sql`, and run it.
 3. In **Authentication > URL Configuration**, set the site URL to `https://old-school-apps.com`.
-4. Copy the project URL, anon key, and service-role key from **Project Settings > API**.
+4. Add `https://old-school-apps.com/**` to **Redirect URLs**.
+5. Copy the project URL, anon key, and service-role key from **Project Settings > API**.
+
+### Social sign-in
+
+Both providers use this Supabase callback URL:
+
+`https://qjjwpqwqtsqxkxmwpabf.supabase.co/auth/v1/callback`
+
+For Google:
+
+1. Create an OAuth web application in Google Cloud Console.
+2. Add the callback URL above as an authorized redirect URI.
+3. In **Supabase > Authentication > Sign In / Providers > Google**, enter the
+   client ID and client secret, then enable the provider.
+4. Set `GOOGLE_OAUTH_ENABLED=true` in Vercel.
+
+For Facebook:
+
+1. Create a Facebook app and add the Facebook Login product.
+2. Add the callback URL above as a valid OAuth redirect URI.
+3. In **Supabase > Authentication > Sign In / Providers > Facebook**, enter
+   the app ID and app secret, then enable the provider.
+4. Set `FACEBOOK_OAUTH_ENABLED=true` in Vercel.
+
+Enter provider secrets directly in Supabase. Do not put them in this repository.
 
 ## 2. Create the Stripe subscription
 
@@ -31,6 +56,8 @@ Add these environment variables to Production, Preview, and Development:
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_ID`
 - `SITE_URL=https://old-school-apps.com`
+- `GOOGLE_OAUTH_ENABLED=false` until Google is configured in Supabase
+- `FACEBOOK_OAUTH_ENABLED=false` until Facebook is configured in Supabase
 
 Never expose the Supabase service-role key or Stripe secret key in browser code.
 

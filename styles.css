@@ -135,6 +135,7 @@ a {
 }
 
 .main-nav a,
+.main-nav button,
 .download-link,
 .primary-action {
   display: inline-flex;
@@ -153,12 +154,15 @@ a {
   font-weight: 700;
   text-decoration: none;
   transition: filter 120ms ease, transform 120ms ease;
+  cursor: pointer;
 }
 
 .main-nav a:hover,
+.main-nav button:hover,
 .download-link:hover,
 .primary-action:hover,
 .main-nav a:focus-visible,
+.main-nav button:focus-visible,
 .download-link:focus-visible,
 .primary-action:focus-visible {
   filter: brightness(1.04);
@@ -167,6 +171,7 @@ a {
 }
 
 .main-nav a:active,
+.main-nav button:active,
 .download-link:active,
 .primary-action:active {
   border-color: var(--win-shadow) var(--win-highlight) var(--win-highlight) var(--win-shadow);
@@ -174,8 +179,21 @@ a {
   transform: translate(1px, 1px);
 }
 
-.main-nav .pass-link {
+.main-nav .pass-link,
+.pass-action {
   background: #ffff7a;
+}
+
+.main-nav button,
+.download-link,
+.primary-action {
+  font-family: inherit;
+}
+
+button.download-link:disabled,
+button.primary-action:disabled {
+  color: var(--win-shadow);
+  cursor: wait;
 }
 
 .catalog-intro {
@@ -1008,6 +1026,164 @@ h1 {
   text-underline-offset: 3px;
 }
 
+.catalog-dialog {
+  width: min(470px, calc(100vw - 28px));
+  padding: 3px;
+  color: var(--ink);
+  background: var(--win-face);
+  border-color: var(--win-highlight) var(--win-shadow) var(--win-shadow) var(--win-highlight);
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: inset -1px -1px 0 var(--win-face-dark), inset 1px 1px 0 var(--win-face-light), 8px 8px 0 rgba(0, 0, 0, 0.35);
+  font: inherit;
+}
+
+.catalog-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.catalog-dialog-titlebar {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 4px 3px 7px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--title-blue), var(--title-blue-2));
+}
+
+.window-close {
+  display: grid;
+  width: 23px;
+  height: 21px;
+  padding: 0;
+  place-items: center;
+  color: #000;
+  background: var(--win-face);
+  border-color: var(--win-highlight) var(--win-shadow) var(--win-shadow) var(--win-highlight);
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: inset -1px -1px 0 var(--win-face-dark), inset 1px 1px 0 var(--win-face-light);
+  font: 700 15px/1 Tahoma, sans-serif;
+  cursor: pointer;
+}
+
+.catalog-dialog-body {
+  padding: 16px;
+}
+
+.catalog-dialog-body > p:first-child {
+  margin-bottom: 14px;
+}
+
+.catalog-field {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.catalog-field input {
+  width: 100%;
+  min-height: 35px;
+  padding: 5px 7px;
+  color: #000;
+  background: #fff;
+  border-color: var(--win-shadow) var(--win-highlight) var(--win-highlight) var(--win-shadow);
+  border-style: solid;
+  border-width: 2px;
+  font: inherit;
+}
+
+.social-auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.social-auth .social-login {
+  width: 100%;
+  margin: 0;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  height: 1px;
+  flex: 1;
+  content: "";
+  background: var(--win-face-dark);
+}
+
+.catalog-message {
+  min-height: 20px;
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.catalog-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.catalog-dialog-actions .primary-action,
+.wide-action {
+  margin-top: 0;
+}
+
+.catalog-account-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #fff;
+  border-color: var(--win-shadow) var(--win-highlight) var(--win-highlight) var(--win-shadow);
+  border-style: solid;
+  border-width: 2px;
+}
+
+.catalog-account-summary strong {
+  padding: 3px 7px;
+  color: #fff;
+  background: var(--title-blue);
+}
+
+.catalog-pass-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.catalog-pass-list li::marker {
+  color: var(--title-blue);
+}
+
+.wide-action {
+  width: 100%;
+}
+
+body.pass-active .paid-download::after {
+  margin-left: 5px;
+  content: "✓";
+}
+
 @media (max-width: 940px) {
   .catalog-intro,
   .featured-content,
@@ -1049,7 +1225,8 @@ h1 {
     justify-content: flex-start;
   }
 
-  .main-nav a {
+  .main-nav a,
+  .main-nav button {
     flex: 1 1 94px;
     text-align: center;
   }
@@ -1099,5 +1276,13 @@ h1 {
 
   .app-card-top {
     flex-direction: column;
+  }
+
+  .social-auth {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-dialog-actions .primary-action {
+    width: 100%;
   }
 }

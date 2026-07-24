@@ -728,6 +728,34 @@ body.focus-mode .paper-frame {
   font-weight: 700;
 }
 
+.social-auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.social-auth .bevel-button {
+  width: 100%;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  height: 1px;
+  flex: 1;
+  content: "";
+  background: var(--chrome-dark);
+}
+
 .account-summary {
   display: flex;
   align-items: center;
@@ -840,5 +868,11 @@ body.focus-mode .paper-frame {
   #editor {
     min-height: 58vh;
     padding: var(--editor-top-padding) 22px 44px 76px;
+  }
+}
+
+@media (max-width: 520px) {
+  .social-auth {
+    grid-template-columns: 1fr;
   }
 }
