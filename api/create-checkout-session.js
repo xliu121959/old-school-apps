@@ -9,7 +9,7 @@ module.exports = async function handler(request, response) {
     const stripe = new Stripe(requiredEnv("STRIPE_SECRET_KEY"));
     const profile = await ensureProfile(user);
 
-    if (profile.plan === "pro") {
+    if (profile.plan === "pro" && ["active", "trialing"].includes(profile.subscription_status)) {
       return json(response, 409, { error: "This account already has the Old School Apps Pass" });
     }
 
@@ -28,6 +28,8 @@ module.exports = async function handler(request, response) {
     }
 
     const baseUrl = siteUrl(request);
+    const allowedReturnPaths = new Set(["/typewriter-notes.html", "/desk-calendar-planner.html", "/index.html"]);
+    const returnPath = allowedReturnPaths.has(request.body?.returnTo) ? request.body.returnTo : "/typewriter-notes.html";
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -38,8 +40,8 @@ module.exports = async function handler(request, response) {
       subscription_data: {
         metadata: { product: "old_school_apps_pass", supabase_user_id: user.id },
       },
-      success_url: `${baseUrl}/typewriter-notes.html?checkout=success`,
-      cancel_url: `${baseUrl}/typewriter-notes.html?checkout=cancelled`,
+      success_url: `${baseUrl}${returnPath}?checkout=success`,
+      cancel_url: `${baseUrl}${returnPath}?checkout=cancelled`,
     });
 
     json(response, 200, { url: session.url });

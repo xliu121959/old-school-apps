@@ -1,9 +1,19 @@
 const PLANNER_STORAGE_KEY = "desk-calendar-planner-v1";
+const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const PLANNER_STATE_ENDPOINT = "/api/state?app=desk-calendar-planner";
+const PREMIUM_THEMES = new Set(["night", "executive"]);
 
 const plannerState = loadPlannerState();
+const authState = {
+  session: loadSession(),
+  profile: null,
+};
 let taskBeingEdited = null;
 let eventBeingEdited = null;
 let saveTimer = null;
+let cloudSaveTimer = null;
+let toastTimer = null;
+let stickyHistoryCaptured = false;
 
 const elements = {
   todayButton: document.querySelector("#todayButton"),
@@ -12,8 +22,13 @@ const elements = {
   inlineTaskButton: document.querySelector("#inlineTaskButton"),
   inlineEventButton: document.querySelector("#inlineEventButton"),
   themeSelect: document.querySelector("#themeSelect"),
+  exportButton: document.querySelector("#exportButton"),
+  historyButton: document.querySelector("#historyButton"),
   viewButtons: document.querySelectorAll("[data-view]"),
   settingsButton: document.querySelector("#settingsButton"),
+  upgradeButton: document.querySelector("#upgradeButton"),
+  inspectorUpgradeButton: document.querySelector("#inspectorUpgradeButton"),
+  accountButton: document.querySelector("#accountButton"),
   previousMonthButton: document.querySelector("#previousMonthButton"),
   nextMonthButton: document.querySelector("#nextMonthButton"),
   miniMonthTitle: document.querySelector("#miniMonthTitle"),
@@ -50,7 +65,10 @@ const elements = {
   statusDate: document.querySelector("#statusDate"),
   statusTasks: document.querySelector("#statusTasks"),
   statusCompleted: document.querySelector("#statusCompleted"),
+  cloudState: document.querySelector("#cloudState"),
   saveState: document.querySelector("#saveState"),
+  passSummary: document.querySelector("#passSummary"),
+  passSummaryText: document.querySelector("#passSummaryText"),
   taskDialog: document.querySelector("#taskDialog"),
   taskForm: document.querySelector("#taskForm"),
   taskDialogTitle: document.querySelector("#taskDialogTitle"),
@@ -68,6 +86,33 @@ const elements = {
   weekStartSelect: document.querySelector("#weekStartSelect"),
   showCompletedToggle: document.querySelector("#showCompletedToggle"),
   confirmDeleteToggle: document.querySelector("#confirmDeleteToggle"),
+  authDialog: document.querySelector("#authDialog"),
+  authForm: document.querySelector("#authForm"),
+  authEmail: document.querySelector("#authEmail"),
+  authPassword: document.querySelector("#authPassword"),
+  authMessage: document.querySelector("#authMessage"),
+  socialLoginButtons: document.querySelectorAll(".social-login"),
+  signUpButton: document.querySelector("#signUpButton"),
+  closeAuthButton: document.querySelector("#closeAuthButton"),
+  accountDialog: document.querySelector("#accountDialog"),
+  accountEmail: document.querySelector("#accountEmail"),
+  accountPlan: document.querySelector("#accountPlan"),
+  accountMessage: document.querySelector("#accountMessage"),
+  accountUpgradeButton: document.querySelector("#accountUpgradeButton"),
+  billingButton: document.querySelector("#billingButton"),
+  signOutButton: document.querySelector("#signOutButton"),
+  closeAccountButton: document.querySelector("#closeAccountButton"),
+  upgradeDialog: document.querySelector("#upgradeDialog"),
+  upgradeMessage: document.querySelector("#upgradeMessage"),
+  checkoutButton: document.querySelector("#checkoutButton"),
+  closeUpgradeButton: document.querySelector("#closeUpgradeButton"),
+  exportDialog: document.querySelector("#exportDialog"),
+  closeExportButton: document.querySelector("#closeExportButton"),
+  exportOptions: document.querySelectorAll("[data-export]"),
+  historyDialog: document.querySelector("#historyDialog"),
+  historyList: document.querySelector("#historyList"),
+  closeHistoryButton: document.querySelector("#closeHistoryButton"),
+  toast: document.querySelector("#toast"),
 };
 
 function localDateKey(date) {
@@ -124,6 +169,8 @@ function seedPlannerState() {
       confirmDelete: false,
       carryTasks: false,
     },
+    history: [],
+    clientUpdatedAt: Date.now(),
     days: {
       [todayKey]: {
         tasks: [
@@ -180,11 +227,34 @@ function startOfWeekForSeed(date, weekStart) {
 function loadPlannerState() {
   try {
     const stored = JSON.parse(localStorage.getItem(PLANNER_STORAGE_KEY) || "null");
-    if (stored?.days && stored?.preferences) return stored;
+    if (stored?.days && stored?.preferences) return normalizePlannerState(stored);
   } catch {
     // A malformed local value should not prevent the planner from opening.
   }
   return seedPlannerState();
+}
+
+function normalizePlannerState(value) {
+  const fallback = seedPlannerState();
+  return {
+    ...fallback,
+    ...value,
+    preferences: {
+      ...fallback.preferences,
+      ...(value.preferences || {}),
+    },
+    days: value.days && typeof value.days === "object" ? value.days : fallback.days,
+    history: Array.isArray(value.history) ? value.history.slice(0, 20) : [],
+    clientUpdatedAt: Number(value.clientUpdatedAt) || 0,
+  };
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null");
+  } catch {
+    return null;
+  }
 }
 
 function ensureDay(key) {
@@ -194,13 +264,289 @@ function ensureDay(key) {
   return plannerState.days[key];
 }
 
+function isPro() {
+  return authState.profile?.plan === "pro"
+    && ["active", "trialing"].includes(authState.profile?.subscriptionStatus);
+}
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.classList.add("visible");
+  clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => elements.toast.classList.remove("visible"), 2600);
+}
+
+function openUpgradeDialog(message = "") {
+  elements.upgradeMessage.textContent = message;
+  elements.upgradeDialog.showModal();
+}
+
+function requirePass(message) {
+  if (isPro()) return true;
+  openUpgradeDialog(message);
+  return false;
+}
+
+function historySnapshot(label) {
+  return {
+    id: createId("history"),
+    label,
+    savedAt: new Date().toISOString(),
+    selectedDate: plannerState.selectedDate,
+    view: plannerState.view,
+    theme: plannerState.theme,
+    preferences: structuredClone(plannerState.preferences),
+    days: structuredClone(plannerState.days),
+  };
+}
+
+function recordHistory(label) {
+  if (!isPro()) return;
+  plannerState.history.unshift(historySnapshot(label));
+  plannerState.history = plannerState.history.slice(0, 20);
+}
+
 function scheduleSave() {
   elements.saveState.textContent = "Saving...";
   clearTimeout(saveTimer);
   saveTimer = window.setTimeout(() => {
+    plannerState.clientUpdatedAt = Date.now();
     localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(plannerState));
     elements.saveState.textContent = "Saved locally";
+    scheduleCloudSave();
   }, 180);
+}
+
+function scheduleCloudSave() {
+  if (!isPro() || !authState.session?.access_token) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = window.setTimeout(saveCloudState, 900);
+}
+
+async function apiRequest(path, options = {}, retry = true) {
+  if (authState.session && authState.session.expires_at * 1000 < Date.now() + 60000) {
+    await refreshSession();
+  }
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+  if (authState.session?.access_token) {
+    headers.Authorization = `Bearer ${authState.session.access_token}`;
+  }
+  const response = await fetch(path, { ...options, headers });
+  if (response.status === 401 && retry && authState.session?.refresh_token) {
+    await refreshSession();
+    return apiRequest(path, options, false);
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+async function refreshSession() {
+  if (!authState.session?.refresh_token) throw new Error("Sign in required");
+  const response = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "refresh", refreshToken: authState.session.refresh_token }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    signOut(false);
+    throw new Error(data.error || "Your session expired");
+  }
+  setSession(data);
+}
+
+function setSession(session) {
+  authState.session = session;
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+}
+
+function readOAuthCallback() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  const error = params.get("error_description");
+  if (error) {
+    elements.authDialog.showModal();
+    elements.authMessage.textContent = error;
+    history.replaceState({}, "", `${window.location.pathname}${window.location.search}`);
+    return;
+  }
+  if (!accessToken) return;
+  const expiresIn = Number(params.get("expires_in")) || 3600;
+  setSession({
+    access_token: accessToken,
+    refresh_token: params.get("refresh_token"),
+    token_type: params.get("token_type") || "bearer",
+    expires_in: expiresIn,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+  });
+  history.replaceState({}, "", window.location.pathname);
+}
+
+async function saveCloudState() {
+  if (!isPro() || !authState.session?.access_token) return;
+  elements.cloudState.textContent = "Cloud saving...";
+  try {
+    await apiRequest(PLANNER_STATE_ENDPOINT, {
+      method: "PUT",
+      body: JSON.stringify({ state: plannerState }),
+    });
+    elements.cloudState.textContent = "Cloud / Pass";
+  } catch (error) {
+    elements.cloudState.textContent = "Cloud error";
+    showToast(error.message);
+  }
+}
+
+async function syncCloudState() {
+  if (!isPro() || !authState.session?.access_token) return;
+  elements.cloudState.textContent = "Cloud syncing...";
+  const cloud = await apiRequest(PLANNER_STATE_ENDPOINT);
+  if (cloud.state && Number(cloud.state.clientUpdatedAt || 0) > Number(plannerState.clientUpdatedAt || 0)) {
+    Object.assign(plannerState, normalizePlannerState(cloud.state));
+    localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(plannerState));
+    render();
+    showToast("Cloud planner restored.");
+  } else {
+    await saveCloudState();
+  }
+}
+
+function renderAccountState() {
+  const signedIn = Boolean(authState.session?.access_token);
+  const pro = isPro();
+  elements.accountButton.textContent = signedIn ? "Account" : "Sign In";
+  elements.upgradeButton.hidden = pro;
+  elements.inspectorUpgradeButton.hidden = pro;
+  elements.accountEmail.textContent = authState.profile?.email || authState.session?.user?.email || "";
+  elements.accountPlan.textContent = pro ? "Apps Pass" : "Free";
+  elements.accountUpgradeButton.hidden = pro;
+  elements.billingButton.hidden = !authState.profile?.canManageBilling;
+  elements.passSummaryText.textContent = pro
+    ? "Apps Pass active. Cloud sync and premium desk tools are available."
+    : "Local planning is free. Upgrade for cloud sync and advanced desk tools.";
+  elements.cloudState.textContent = pro && signedIn ? "Cloud / Pass" : "Local only";
+  elements.historyButton.classList.toggle("unlocked", pro);
+}
+
+async function loadAccount() {
+  if (!authState.session?.access_token) return;
+  authState.profile = await apiRequest("/api/account");
+  render();
+}
+
+async function finishSignIn(session) {
+  setSession(session);
+  elements.authDialog.close();
+  await loadAccount();
+  if (isPro()) await syncCloudState();
+  renderAccountState();
+  showToast(isPro() ? "Signed in. Cloud planner is on." : "Signed in. Local planning remains free.");
+}
+
+async function submitAuth(action) {
+  const email = elements.authEmail.value.trim();
+  const password = elements.authPassword.value;
+  elements.authMessage.textContent = action === "signup" ? "Creating account..." : "Signing in...";
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, email, password }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Authentication failed");
+    if (!data.access_token) {
+      elements.authMessage.textContent = "Check your email to confirm the account, then sign in.";
+      return;
+    }
+    elements.authMessage.textContent = "";
+    await finishSignIn(data);
+  } catch (error) {
+    elements.authMessage.textContent = error.message;
+  }
+}
+
+async function startOAuth(provider) {
+  elements.authMessage.textContent = `Opening ${provider === "google" ? "Google" : "Facebook"}...`;
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "oauth", provider, returnTo: "/desk-calendar-planner.html" }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Social sign-in is unavailable");
+    window.location.assign(data.url);
+  } catch (error) {
+    elements.authMessage.textContent = error.message;
+  }
+}
+
+function signOut(showMessage = true) {
+  authState.session = null;
+  authState.profile = null;
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  elements.accountDialog.close();
+  renderAccountState();
+  render();
+  if (showMessage) showToast("Signed out. Local planning remains available.");
+}
+
+async function startCheckout() {
+  if (!authState.session?.access_token) {
+    elements.upgradeDialog.close();
+    elements.authDialog.showModal();
+    elements.authMessage.textContent = "Create an account or sign in before upgrading.";
+    return;
+  }
+  elements.checkoutButton.disabled = true;
+  elements.upgradeMessage.textContent = "Opening secure checkout...";
+  try {
+    const data = await apiRequest("/api/create-checkout-session", {
+      method: "POST",
+      body: JSON.stringify({ returnTo: "/desk-calendar-planner.html" }),
+    });
+    window.location.href = data.url;
+  } catch (error) {
+    elements.upgradeMessage.textContent = error.message;
+    elements.checkoutButton.disabled = false;
+  }
+}
+
+async function openBillingPortal() {
+  elements.accountMessage.textContent = "Opening billing...";
+  try {
+    const data = await apiRequest("/api/create-portal-session", {
+      method: "POST",
+      body: JSON.stringify({ returnTo: "/desk-calendar-planner.html" }),
+    });
+    window.location.href = data.url;
+  } catch (error) {
+    elements.accountMessage.textContent = error.message;
+  }
+}
+
+async function refreshPassAfterCheckout(attempt = 0) {
+  try {
+    await loadAccount();
+    if (isPro()) {
+      await syncCloudState();
+      showToast("Apps Pass active. Premium planner tools are unlocked.");
+      history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+  } catch {
+    // Stripe webhooks can take a moment; retry before reporting a problem.
+  }
+  if (attempt < 4) {
+    window.setTimeout(() => refreshPassAfterCheckout(attempt + 1), 1400);
+  } else {
+    showToast("Payment received. Refresh shortly if premium access is still activating.");
+  }
 }
 
 function formatDate(date, options) {
@@ -313,7 +659,9 @@ function taskMarkup(task) {
 }
 
 function eventMarkup(event) {
-  const reminder = event.reminder !== "none" ? `${event.reminder} min reminder` : "No reminder";
+  const reminder = event.reminder !== "none"
+    ? (isPro() ? `${event.reminder} min reminder` : "Reminder - Pass")
+    : "No reminder";
   return `
     <article class="event-item" data-event-id="${event.id}">
       <time class="event-time">${formatTime(event.time)}</time>
@@ -398,7 +746,9 @@ function renderInspector() {
     ? tags.map((tag) => `<span class="inspector-tag">${escapeHtml(tag)}</span>`).join("")
     : "<span>No tags filed</span>";
   elements.prioritySummary.textContent = highPriority ? `${highPriority} high priority` : "No red stamps";
-  elements.reminderList.innerHTML = reminders.length
+  elements.reminderList.innerHTML = !isPro()
+    ? '<p class="empty-state">Event reminders unlock with Apps Pass.</p>'
+    : reminders.length
     ? reminders.map((event) => `
       <div class="reminder-item">
         <strong>${formatTime(event.time)} - ${escapeHtml(event.title)}</strong>
@@ -433,12 +783,16 @@ function renderViewState() {
 }
 
 function render() {
+  const planKnown = !authState.session?.access_token || Boolean(authState.profile);
+  if (planKnown && !isPro() && PREMIUM_THEMES.has(plannerState.theme)) {
+    plannerState.theme = "classic";
+  }
   const selected = dateFromKey(plannerState.selectedDate);
   plannerState.visibleMonth = `${selected.getFullYear()}-${String(selected.getMonth() + 1).padStart(2, "0")}`;
   document.body.dataset.theme = plannerState.theme;
   elements.themeSelect.value = plannerState.theme;
   elements.statusDate.textContent = formatDate(selected, { weekday: "short", month: "short", day: "numeric" });
-  elements.carryTasksToggle.checked = plannerState.preferences.carryTasks;
+  elements.carryTasksToggle.checked = isPro() && plannerState.preferences.carryTasks;
   elements.weekStartSelect.value = String(plannerState.preferences.weekStart);
   elements.showCompletedToggle.checked = plannerState.preferences.showCompleted;
   elements.confirmDeleteToggle.checked = plannerState.preferences.confirmDelete;
@@ -450,13 +804,158 @@ function render() {
   renderInspector();
   renderCounts();
   renderViewState();
+  renderAccountState();
+}
+
+function carryOpenTasks(fromKey, toKey) {
+  if (!isPro() || !plannerState.preferences.carryTasks) return;
+  const fromDate = dateFromKey(fromKey);
+  if (localDateKey(addDays(fromDate, 1)) !== toKey) return;
+  const sourceTasks = ensureDay(fromKey).tasks.filter((task) => !task.completed);
+  const target = ensureDay(toKey);
+  const additions = sourceTasks.filter((task) => !target.tasks.some((entry) => entry.carriedFrom === task.id));
+  if (!additions.length) return;
+  recordHistory("Before carrying open tasks");
+  target.tasks.push(...additions.map((task) => ({
+    ...structuredClone(task),
+    id: createId("task"),
+    carriedFrom: task.id,
+  })));
+  showToast(`${additions.length} open ${additions.length === 1 ? "task" : "tasks"} carried forward.`);
 }
 
 function selectDate(key) {
+  const previousDate = plannerState.selectedDate;
+  carryOpenTasks(previousDate, key);
   plannerState.selectedDate = key;
+  stickyHistoryCaptured = false;
   ensureDay(key);
   render();
   scheduleSave();
+}
+
+function renderHistory() {
+  elements.historyList.innerHTML = plannerState.history.length
+    ? plannerState.history.map((entry) => `
+      <article class="history-entry">
+        <div>
+          <strong>${escapeHtml(entry.label)}</strong>
+          <span>${formatDate(new Date(entry.savedAt), { dateStyle: "medium", timeStyle: "short" })}</span>
+        </div>
+        <button class="office-button" data-history-id="${entry.id}" type="button">Restore</button>
+      </article>
+    `).join("")
+    : '<p class="empty-state">No premium snapshots yet. Changes will appear here as you plan.</p>';
+}
+
+function restoreHistory(id) {
+  if (!requirePass("Planner history is included with the Apps Pass.")) return;
+  const entry = plannerState.history.find((item) => item.id === id);
+  if (!entry) return;
+  const preservedHistory = [...plannerState.history];
+  Object.assign(plannerState, normalizePlannerState({
+    ...plannerState,
+    selectedDate: entry.selectedDate,
+    view: entry.view,
+    theme: entry.theme,
+    preferences: structuredClone(entry.preferences),
+    days: structuredClone(entry.days),
+    history: preservedHistory,
+    clientUpdatedAt: Date.now(),
+  }));
+  elements.historyDialog.close();
+  render();
+  scheduleSave();
+  showToast("Planner snapshot restored.");
+}
+
+function selectedDayExportText() {
+  const date = dateFromKey(plannerState.selectedDate);
+  const day = ensureDay(plannerState.selectedDate);
+  const taskLines = day.tasks.length
+    ? day.tasks.map((task) => `${task.completed ? "[x]" : "[ ]"}${task.priority ? " [HIGH]" : ""} ${task.title}`).join("\n")
+    : "(No tasks)";
+  const eventLines = day.events.length
+    ? [...day.events].sort((a, b) => a.time.localeCompare(b.time)).map((event) => `${formatTime(event.time)} - ${event.title}`).join("\n")
+    : "(No appointments)";
+  return [
+    `Desk Calendar Planner - ${formatDate(date, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`,
+    "",
+    "THINGS TO DO",
+    taskLines,
+    "",
+    "APPOINTMENTS",
+    eventLines,
+    "",
+    "QUICK NOTE",
+    day.note || "(No note)",
+  ].join("\n");
+}
+
+function downloadTextExport() {
+  const blob = new Blob([selectedDayExportText()], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `desk-planner-${plannerState.selectedDate}.txt`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("Downloaded text planner.");
+}
+
+function openPdfExport() {
+  if (!requirePass("PDF export is included with the Apps Pass.")) return;
+  const date = dateFromKey(plannerState.selectedDate);
+  const day = ensureDay(plannerState.selectedDate);
+  const printWindow = window.open("", "_blank", "width=900,height=900");
+  if (!printWindow) {
+    showToast("Allow popups to export PDF.");
+    return;
+  }
+  const tasks = day.tasks.map((task) => `
+    <li class="${task.completed ? "done" : ""}">
+      ${task.priority ? '<b class="priority">HIGH</b>' : ""}
+      ${escapeHtml(task.title)}
+    </li>
+  `).join("") || "<li>No tasks</li>";
+  const events = [...day.events].sort((a, b) => a.time.localeCompare(b.time)).map((event) => `
+    <li><b>${formatTime(event.time)}</b> ${escapeHtml(event.title)}</li>
+  `).join("") || "<li>No appointments</li>";
+  printWindow.document.write(`
+    <!doctype html>
+    <html>
+      <head>
+        <title>Desk Planner ${plannerState.selectedDate}</title>
+        <style>
+          body { margin: 48px; color: #222; background: #fffdf0; font: 16px/1.5 Georgia, serif; }
+          header { padding-bottom: 18px; border-bottom: 3px solid #a21d24; }
+          h1 { margin: 0; font-size: 30px; }
+          h2 { margin-top: 28px; border-bottom: 1px solid #888; font-size: 18px; }
+          li { margin: 9px 0; }
+          .done { color: #777; text-decoration: line-through; }
+          .priority { margin-right: 7px; padding: 2px 5px; color: #a21d24; border: 2px solid #a21d24; font: 11px Arial; }
+          .note { min-height: 110px; padding: 18px; background: #fff09a; white-space: pre-wrap; }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>${escapeHtml(formatDate(date, { weekday: "long", month: "long", day: "numeric", year: "numeric" }))}</h1>
+          <p>Desk Calendar Planner</p>
+        </header>
+        <h2>Things To Do</h2>
+        <ul>${tasks}</ul>
+        <h2>Appointments</h2>
+        <ul>${events}</ul>
+        <h2>Quick Note</h2>
+        <div class="note">${escapeHtml(day.note || "")}</div>
+        <script>window.onload = () => window.print();<\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  showToast("Opened print dialog for PDF.");
 }
 
 function openTaskDialog(task = null) {
@@ -496,7 +995,13 @@ elements.newEventButton.addEventListener("click", () => openEventDialog());
 elements.inlineEventButton.addEventListener("click", () => openEventDialog());
 
 elements.themeSelect.addEventListener("change", () => {
-  plannerState.theme = elements.themeSelect.value;
+  const nextTheme = elements.themeSelect.value;
+  if (PREMIUM_THEMES.has(nextTheme) && !requirePass(`${elements.themeSelect.options[elements.themeSelect.selectedIndex].text.replace(" - Pass", "")} is included with the Apps Pass.`)) {
+    elements.themeSelect.value = plannerState.theme;
+    return;
+  }
+  recordHistory(`Before changing theme to ${elements.themeSelect.options[elements.themeSelect.selectedIndex].text.replace(" - Pass", "")}`);
+  plannerState.theme = nextTheme;
   render();
   scheduleSave();
 });
@@ -564,6 +1069,7 @@ elements.taskList.addEventListener("change", (event) => {
   if (!item || !event.target.classList.contains("task-toggle")) return;
   const task = ensureDay(plannerState.selectedDate).tasks.find((entry) => entry.id === item.dataset.taskId);
   if (!task) return;
+  recordHistory(`Before ${event.target.checked ? "completing" : "reopening"} ${task.title}`);
   task.completed = event.target.checked;
   render();
   scheduleSave();
@@ -579,11 +1085,13 @@ elements.taskList.addEventListener("click", (event) => {
 
   if (action === "edit-task") openTaskDialog(task);
   if (action === "priority-task") {
+    recordHistory(`Before changing priority for ${task.title}`);
     task.priority = !task.priority;
     render();
     scheduleSave();
   }
   if (action === "delete-task" && shouldDelete(`"${task.title}"`)) {
+    recordHistory(`Before deleting ${task.title}`);
     day.tasks = day.tasks.filter((entry) => entry.id !== task.id);
     render();
     scheduleSave();
@@ -600,6 +1108,7 @@ elements.eventTimeline.addEventListener("click", (event) => {
 
   if (action === "edit-event") openEventDialog(calendarEvent);
   if (action === "delete-event" && shouldDelete(`"${calendarEvent.title}"`)) {
+    recordHistory(`Before deleting ${calendarEvent.title}`);
     day.events = day.events.filter((entry) => entry.id !== calendarEvent.id);
     render();
     scheduleSave();
@@ -607,11 +1116,20 @@ elements.eventTimeline.addEventListener("click", (event) => {
 });
 
 elements.stickyNote.addEventListener("input", () => {
+  if (!stickyHistoryCaptured) {
+    recordHistory("Before editing the daily sticky note");
+    stickyHistoryCaptured = true;
+  }
   ensureDay(plannerState.selectedDate).note = elements.stickyNote.value;
   scheduleSave();
 });
 
 elements.carryTasksToggle.addEventListener("change", () => {
+  if (elements.carryTasksToggle.checked && !requirePass("Recurring task carry-forward is included with the Apps Pass.")) {
+    elements.carryTasksToggle.checked = false;
+    return;
+  }
+  recordHistory("Before changing recurring task settings");
   plannerState.preferences.carryTasks = elements.carryTasksToggle.checked;
   scheduleSave();
 });
@@ -623,6 +1141,7 @@ elements.taskForm.addEventListener("submit", (event) => {
   const day = ensureDay(plannerState.selectedDate);
   const tags = elements.taskTagsInput.value.split(",").map((tag) => tag.trim()).filter(Boolean).slice(0, 6);
   const existing = day.tasks.find((task) => task.id === taskBeingEdited);
+  recordHistory(existing ? `Before editing ${existing.title}` : "Before adding a task");
 
   if (existing) {
     existing.title = elements.taskTitleInput.value.trim();
@@ -648,6 +1167,8 @@ elements.eventForm.addEventListener("submit", (event) => {
   if (!elements.eventForm.reportValidity()) return;
   const day = ensureDay(plannerState.selectedDate);
   const existing = day.events.find((calendarEvent) => calendarEvent.id === eventBeingEdited);
+  if (elements.eventReminderInput.value !== "none" && !requirePass("Event reminders are included with the Apps Pass.")) return;
+  recordHistory(existing ? `Before editing ${existing.title}` : "Before adding an appointment");
 
   if (existing) {
     existing.time = elements.eventTimeInput.value;
@@ -668,6 +1189,7 @@ elements.eventForm.addEventListener("submit", (event) => {
 
 elements.settingsForm.addEventListener("submit", (event) => {
   if (event.submitter?.value === "cancel") return;
+  recordHistory("Before changing planner preferences");
   plannerState.preferences.weekStart = Number(elements.weekStartSelect.value);
   plannerState.preferences.showCompleted = elements.showCompletedToggle.checked;
   plannerState.preferences.confirmDelete = elements.confirmDeleteToggle.checked;
@@ -675,5 +1197,76 @@ elements.settingsForm.addEventListener("submit", (event) => {
   scheduleSave();
 });
 
+elements.exportButton.addEventListener("click", () => elements.exportDialog.showModal());
+elements.closeExportButton.addEventListener("click", () => elements.exportDialog.close());
+elements.exportOptions.forEach((button) => {
+  button.addEventListener("click", () => {
+    elements.exportDialog.close();
+    if (button.dataset.export === "text") downloadTextExport();
+    if (button.dataset.export === "pdf") openPdfExport();
+  });
+});
+
+elements.historyButton.addEventListener("click", () => {
+  if (!requirePass("Restorable planner history is included with the Apps Pass.")) return;
+  renderHistory();
+  elements.historyDialog.showModal();
+});
+elements.closeHistoryButton.addEventListener("click", () => elements.historyDialog.close());
+elements.historyList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-history-id]");
+  if (button) restoreHistory(button.dataset.historyId);
+});
+
+elements.accountButton.addEventListener("click", () => {
+  if (authState.session?.access_token) {
+    renderAccountState();
+    elements.accountDialog.showModal();
+  } else {
+    elements.authMessage.textContent = "";
+    elements.authDialog.showModal();
+  }
+});
+elements.upgradeButton.addEventListener("click", () => openUpgradeDialog());
+elements.inspectorUpgradeButton.addEventListener("click", () => openUpgradeDialog());
+elements.accountUpgradeButton.addEventListener("click", () => {
+  elements.accountDialog.close();
+  openUpgradeDialog();
+});
+elements.authForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitAuth("login");
+});
+elements.signUpButton.addEventListener("click", () => submitAuth("signup"));
+elements.socialLoginButtons.forEach((button) => {
+  button.addEventListener("click", () => startOAuth(button.dataset.provider));
+});
+elements.signOutButton.addEventListener("click", () => signOut());
+elements.checkoutButton.addEventListener("click", startCheckout);
+elements.billingButton.addEventListener("click", openBillingPortal);
+elements.closeAuthButton.addEventListener("click", () => elements.authDialog.close());
+elements.closeAccountButton.addEventListener("click", () => elements.accountDialog.close());
+elements.closeUpgradeButton.addEventListener("click", () => elements.upgradeDialog.close());
+
+readOAuthCallback();
 render();
-scheduleSave();
+localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(plannerState));
+
+if (authState.session?.access_token) {
+  loadAccount()
+    .then(() => {
+      if (isPro()) return syncCloudState();
+      elements.cloudState.textContent = "Local only";
+      return null;
+    })
+    .catch((error) => {
+      elements.cloudState.textContent = "Cloud error";
+      showToast(error.message);
+    });
+}
+
+const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
+if (checkoutResult === "success") {
+  showToast("Payment received. Activating your Apps Pass...");
+  window.setTimeout(() => refreshPassAfterCheckout(), 1000);
+}

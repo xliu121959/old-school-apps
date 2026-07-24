@@ -27,15 +27,19 @@
         <label class="toolbar-label" for="themeSelect">Theme</label>
         <select class="office-select" id="themeSelect">
           <option value="classic">Classic Desk</option>
-          <option value="night">Night Office</option>
+          <option value="night">Night Office - Pass</option>
           <option value="school">School Planner</option>
-          <option value="executive">Executive Ledger</option>
+          <option value="executive">Executive Ledger - Pass</option>
         </select>
+        <button class="office-button" id="exportButton" type="button">Export</button>
+        <button class="office-button pass-feature" id="historyButton" type="button">History</button>
         <div class="view-switch" role="group" aria-label="Planner view">
           <button class="office-button active" data-view="day" type="button">Day</button>
           <button class="office-button" data-view="week" type="button">Week</button>
         </div>
         <button class="office-button settings-button" id="settingsButton" type="button">Settings</button>
+        <button class="office-button pass-button" id="upgradeButton" type="button">Apps Pass</button>
+        <button class="office-button" id="accountButton" type="button">Sign In</button>
         <a class="office-button catalog-button" href="index.html">App Catalog</a>
       </nav>
 
@@ -164,8 +168,14 @@
             <h2>Recurring</h2>
             <label class="check-row">
               <input id="carryTasksToggle" type="checkbox" />
-              <span>Carry open tasks to tomorrow</span>
+              <span>Carry open tasks to tomorrow <b class="pass-label">PASS</b></span>
             </label>
+          </section>
+
+          <section class="inspector-section pass-summary" id="passSummary">
+            <h2>Apps Pass</h2>
+            <p id="passSummaryText">Local planning is free. Upgrade for cloud sync and advanced desk tools.</p>
+            <button class="office-button pass-button" id="inspectorUpgradeButton" type="button">View Premium</button>
           </section>
         </aside>
       </div>
@@ -174,6 +184,7 @@
         <span id="statusDate"></span>
         <span id="statusTasks"></span>
         <span id="statusCompleted"></span>
+        <span id="cloudState">Local only</span>
         <span class="save-state" id="saveState">Saved locally</span>
       </footer>
     </div>
@@ -224,9 +235,9 @@
             Reminder
             <select id="eventReminderInput">
               <option value="none">None</option>
-              <option value="10">10 minutes before</option>
-              <option value="30">30 minutes before</option>
-              <option value="60">1 hour before</option>
+              <option value="10">10 minutes before - Pass</option>
+              <option value="30">30 minutes before - Pass</option>
+              <option value="60">1 hour before - Pass</option>
             </select>
           </label>
           <div class="dialog-actions">
@@ -266,6 +277,102 @@
       </form>
     </dialog>
 
+    <dialog class="office-dialog account-dialog" id="authDialog">
+      <form id="authForm">
+        <div class="dialog-titlebar">
+          <strong>Desk Calendar Account</strong>
+          <button class="dialog-close" id="closeAuthButton" type="button" aria-label="Close">X</button>
+        </div>
+        <div class="dialog-body">
+          <p class="dialog-intro">Sign in to activate your Apps Pass and cloud planner.</p>
+          <div class="social-auth">
+            <button class="office-button social-login" data-provider="google" type="button">Sign in with Google</button>
+            <button class="office-button social-login" data-provider="facebook" type="button">Sign in with Facebook</button>
+          </div>
+          <div class="auth-divider"><span>or use email</span></div>
+          <label>
+            Email
+            <input id="authEmail" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            Password
+            <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required />
+          </label>
+          <p class="dialog-message" id="authMessage" role="status"></p>
+          <div class="dialog-actions split-actions">
+            <button class="office-button" id="signUpButton" type="button">Create Account</button>
+            <button class="office-button primary" type="submit">Sign In</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="office-dialog account-dialog" id="accountDialog">
+      <div class="dialog-titlebar">
+        <strong>Your Account</strong>
+        <button class="dialog-close" id="closeAccountButton" type="button" aria-label="Close">X</button>
+      </div>
+      <div class="dialog-body">
+        <p id="accountEmail"></p>
+        <div class="account-summary">
+          <span>Plan</span>
+          <strong id="accountPlan">Free</strong>
+        </div>
+        <p class="dialog-message" id="accountMessage" role="status"></p>
+        <div class="dialog-actions split-actions">
+          <button class="office-button pass-button" id="accountUpgradeButton" type="button">Get Apps Pass</button>
+          <button class="office-button" id="billingButton" type="button" hidden>Manage Billing</button>
+          <button class="office-button" id="signOutButton" type="button">Sign Out</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="office-dialog upgrade-dialog" id="upgradeDialog">
+      <div class="dialog-titlebar">
+        <strong>Old School Apps Pass</strong>
+        <button class="dialog-close" id="closeUpgradeButton" type="button" aria-label="Close">X</button>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-intro"><strong>Every app. One subscription. $10/month.</strong></p>
+        <ul class="pass-feature-list">
+          <li>Cloud planner sync across devices</li>
+          <li>Restorable planner history</li>
+          <li>Recurring task carry-forward</li>
+          <li>Event reminders and PDF export</li>
+          <li>Night Office and Executive Ledger themes</li>
+          <li>Every Old School desktop app download</li>
+        </ul>
+        <p class="dialog-message" id="upgradeMessage" role="status"></p>
+        <button class="office-button pass-button wide-button" id="checkoutButton" type="button">Subscribe - $10/month</button>
+      </div>
+    </dialog>
+
+    <dialog class="office-dialog" id="exportDialog">
+      <div class="dialog-titlebar">
+        <strong>Export Planner</strong>
+        <button class="dialog-close" id="closeExportButton" type="button" aria-label="Close">X</button>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-intro">Export the selected day.</p>
+        <div class="export-grid">
+          <button class="office-button" data-export="text" type="button">Text File</button>
+          <button class="office-button pass-button" data-export="pdf" type="button">PDF - Pass</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="office-dialog history-dialog" id="historyDialog">
+      <div class="dialog-titlebar">
+        <strong>Planner History</strong>
+        <button class="dialog-close" id="closeHistoryButton" type="button" aria-label="Close">X</button>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-intro">Restore a recent premium cloud snapshot.</p>
+        <div class="planner-history-list" id="historyList"></div>
+      </div>
+    </dialog>
+
+    <div class="planner-toast" id="toast" role="status" aria-live="polite"></div>
     <script src="desk-calendar-planner.js"></script>
   </body>
 </html>

@@ -1,18 +1,32 @@
 const { allowMethods, ensureProfile, handleError, json, requireUser, supabaseRequest } = require("./_lib");
 
-const APP_KEY = "typewriter-notes";
 const FREE_NOTE_LIMIT = 25;
 const FREE_HISTORY_LIMIT = 3;
+const APP_RULES = {
+  "typewriter-notes": { proOnly: false },
+  "desk-calendar-planner": { proOnly: true },
+};
+
+function hasActivePass(profile) {
+  return profile.plan === "pro" && ["active", "trialing"].includes(profile.subscription_status);
+}
 
 module.exports = async function handler(request, response) {
   if (!allowMethods(request, response, ["GET", "PUT"])) return;
 
   try {
     const { user } = await requireUser(request);
+    const appKey = String(request.query?.app || "typewriter-notes");
+    const rules = APP_RULES[appKey];
+    if (!rules) return json(response, 400, { error: "Unsupported app state" });
+    const profile = await ensureProfile(user);
+    if (rules.proOnly && !hasActivePass(profile)) {
+      return json(response, 402, { error: "An active Apps Pass is required for planner cloud sync" });
+    }
 
     if (request.method === "GET") {
       const rows = await supabaseRequest(
-        `/rest/v1/app_states?user_id=eq.${encodeURIComponent(user.id)}&app_key=eq.${APP_KEY}&select=data,updated_at`,
+        `/rest/v1/app_states?user_id=eq.${encodeURIComponent(user.id)}&app_key=eq.${encodeURIComponent(appKey)}&select=data,updated_at`,
         {},
         true,
       );
@@ -24,8 +38,7 @@ module.exports = async function handler(request, response) {
       return json(response, 400, { error: "A valid state object is required" });
     }
 
-    const profile = await ensureProfile(user);
-    if (profile.plan !== "pro") {
+    if (appKey === "typewriter-notes" && profile.plan !== "pro") {
       if (!Array.isArray(data.notes) || data.notes.length > FREE_NOTE_LIMIT) {
         return json(response, 402, { error: `Free cloud storage supports up to ${FREE_NOTE_LIMIT} notes` });
       }
@@ -42,7 +55,7 @@ module.exports = async function handler(request, response) {
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({
         user_id: user.id,
-        app_key: APP_KEY,
+        app_key: appKey,
         data,
         updated_at: new Date().toISOString(),
       }),
