@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 export default defineConfig({
   root: resolve(__dirname),
-  base: "./",
+  base: "/vhs-watchlist/",
   plugins: [react()],
   build: {
     outDir: resolve(__dirname, "../vhs-watchlist"),

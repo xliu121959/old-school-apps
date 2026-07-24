@@ -170,7 +170,7 @@ function atlasStyle(index: number): CSSProperties {
   const column = index % 4;
   const row = Math.floor(index / 4);
   return {
-    backgroundImage: "url('./assets/vhs-cover-atlas.png')",
+    backgroundImage: "url('/vhs-watchlist/assets/vhs-cover-atlas.png')",
     backgroundPosition: `${column * 33.333}% ${row * 50}%`,
     backgroundSize: "400% 300%",
   };
