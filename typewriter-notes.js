@@ -184,6 +184,7 @@ const elements = {
 
 let saveTimer;
 let cloudSaveTimer;
+let analyticsEditTimer;
 let notebookDialogMode = "create";
 let audioContext;
 
@@ -1023,6 +1024,13 @@ elements.editor.addEventListener("input", (event) => {
     }, 140);
   }
   updateActiveNote({ body: event.target.value });
+  clearTimeout(analyticsEditTimer);
+  analyticsEditTimer = setTimeout(() => {
+    track("note_edited", {
+      app: "typewriter-notes",
+      word_count: countWords(event.target.value),
+    });
+  }, 1000);
 });
 
 document.querySelector(".command-bar").addEventListener("click", (event) => {
