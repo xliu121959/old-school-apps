@@ -4,6 +4,10 @@ const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
 const FREE_NOTE_LIMIT = 25;
 const FREE_HISTORY_LIMIT = 3;
 
+function track(eventName, parameters = {}) {
+  window.OldSchoolAnalytics?.track(eventName, parameters);
+}
+
 const starterNotes = [
   {
     id: "morning-pages",
@@ -521,6 +525,7 @@ function readOAuthCallback() {
     expires_in: expiresIn,
     expires_at: Math.floor(Date.now() / 1000) + expiresIn,
   });
+  track("login_completed", { app: "typewriter-notes", method: "oauth" });
   history.replaceState({}, "", window.location.pathname);
 }
 
@@ -566,6 +571,7 @@ async function finishSignIn(session) {
   await syncCloudState();
   renderAccountState();
   showToast("Signed in. Cloud save is on.");
+  track("login_completed", { app: "typewriter-notes" });
 }
 
 async function submitAuth(action) {
@@ -604,11 +610,13 @@ async function submitAuth(action) {
     elements.authMessage.textContent = "";
     await finishSignIn(data);
   } catch (error) {
+    track("auth_failed", { app: "typewriter-notes", method: "email", action });
     elements.authMessage.textContent = error.message;
   }
 }
 
 async function startOAuth(provider) {
+  track("login_started", { app: "typewriter-notes", method: provider });
   elements.authMessage.textContent = `Opening ${provider === "google" ? "Google" : "Facebook"}...`;
   try {
     const response = await fetch("/api/auth", {
@@ -639,6 +647,7 @@ function openUpgradeDialog(message = "") {
 }
 
 async function startCheckout() {
+  track("checkout_started", { app: "typewriter-notes" });
   if (!authState.session?.access_token) {
     elements.upgradeDialog.close();
     elements.authDialog.showModal();
@@ -725,6 +734,7 @@ function downloadFile(filename, content, type) {
 }
 
 async function exportCurrentNote(format) {
+  track("export_requested", { app: "typewriter-notes", format });
   const note = getActiveNote();
   const baseName = sanitizeFilename(note.title);
 
@@ -801,6 +811,7 @@ function escapeHtml(value) {
 }
 
 function createNewNote() {
+  track("note_created", { app: "typewriter-notes" });
   if (!isPro() && state.notes.length >= FREE_NOTE_LIMIT) {
     openUpgradeDialog(`Free accounts can keep up to ${FREE_NOTE_LIMIT} notes.`);
     return;
@@ -875,6 +886,7 @@ function saveNotebookFromDialog() {
 }
 
 function saveVersion() {
+  track("draft_version_saved", { app: "typewriter-notes" });
   const note = getActiveNote();
   if (!isPro() && note.history.length >= FREE_HISTORY_LIMIT) {
     openUpgradeDialog(`Free accounts keep ${FREE_HISTORY_LIMIT} versions per note.`);
@@ -894,6 +906,7 @@ function saveVersion() {
 }
 
 function restoreVersion(index) {
+  track("draft_version_restored", { app: "typewriter-notes" });
   const note = getActiveNote();
   const version = note.history[index];
   if (!version) return;
@@ -935,6 +948,7 @@ function playTypewriterClick() {
 async function importNotes(files) {
   const selectedFiles = Array.from(files || []);
   if (!selectedFiles.length) return;
+  track("notes_imported", { app: "typewriter-notes", count: selectedFiles.length });
   const now = formatDateNow();
   const importedNotes = await Promise.all(
     selectedFiles.map(async (file) => {
@@ -1021,6 +1035,7 @@ elements.soundToggle.addEventListener("change", (event) => {
   state.soundOn = event.target.checked;
   elements.soundState.textContent = state.soundOn ? "Sound on" : "Sound off";
   saveState();
+  track("typewriter_sound_changed", { enabled: event.target.checked });
 });
 
 elements.focusButton.addEventListener("click", () => {
@@ -1028,6 +1043,7 @@ elements.focusButton.addEventListener("click", () => {
   elements.body.classList.toggle("focus-mode", state.focusMode);
   elements.focusButton.textContent = state.focusMode ? "Exit Focus" : "Focus Mode";
   saveState(state.focusMode ? "Focus mode" : "Saved");
+  track("focus_mode_changed", { enabled: state.focusMode });
 });
 
 elements.themeSelect.addEventListener("change", (event) => {
@@ -1040,6 +1056,7 @@ elements.themeSelect.addEventListener("change", (event) => {
   elements.themeState.textContent = themeLabels[state.theme];
   renderSettings();
   saveState("Saved");
+  track("theme_changed", { app: "typewriter-notes", theme: event.target.value });
 });
 
 elements.fontSizeControl.addEventListener("input", (event) => {

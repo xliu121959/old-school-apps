@@ -1,5 +1,9 @@
 const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
 
+function track(eventName, parameters = {}) {
+  window.OldSchoolAnalytics?.track(eventName, parameters);
+}
+
 const apps = [
   {
     name: "Retro File Cabinet",
@@ -138,6 +142,7 @@ function readOAuthCallback() {
     expires_in: expiresIn,
     expires_at: Math.floor(Date.now() / 1000) + expiresIn,
   });
+  track("login_completed", { method: "oauth" });
   history.replaceState({}, "", window.location.pathname);
 }
 
@@ -149,7 +154,8 @@ function renderAppCard(app) {
       return `<button class="download-link paid-download" data-download-id="${download.id}" type="button">${download.action}</button>`;
     }
     const actionClass = download.action === "Open Web App" ? " web-app-link" : "";
-    return `<a class="download-link${actionClass}" href="${download.link}">${download.action}</a>`;
+    const analyticsEvent = download.action === "Open Web App" ? "app_opened" : "waitlist_clicked";
+    return `<a class="download-link${actionClass}" href="${download.link}" data-analytics-event="${analyticsEvent}" data-analytics-param-app-name="${app.name}">${download.action}</a>`;
   }).join("");
 
   return `
@@ -258,15 +264,18 @@ async function submitAuth(action) {
       elements.authMessage.textContent = data.message || "If this email is eligible, confirmation instructions were sent.";
       return;
     }
+    track(action === "signup" ? "signup_completed" : "login_completed");
     setSession(data);
     await loadAccount();
     elements.authDialog.close();
   } catch (error) {
+    track("auth_failed", { method: "email", action });
     elements.authMessage.textContent = error.message;
   }
 }
 
 async function startOAuth(provider) {
+  track("login_started", { method: provider });
   elements.authMessage.textContent = `Opening ${provider === "google" ? "Google" : "Facebook"}...`;
   try {
     const response = await fetch("/api/auth", {
@@ -291,6 +300,7 @@ function signOut(closeDialog = true) {
 }
 
 async function startCheckout() {
+  track("checkout_started", { source: "catalog" });
   if (!authState.session?.access_token) {
     elements.upgradeDialog.close();
     elements.authMessage.textContent = "Sign in before subscribing.";
@@ -330,6 +340,7 @@ async function requestDownload(id, button) {
     return;
   }
   const originalText = button.textContent;
+  track("download_requested", { download_id: id });
   button.disabled = true;
   button.textContent = "Preparing download...";
   try {

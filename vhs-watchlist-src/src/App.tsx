@@ -76,6 +76,10 @@ const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
 const STATE_ENDPOINT = "/api/state?app=vhs-watchlist";
 const FREE_MOVIE_LIMIT = 25;
 
+function track(eventName: string, parameters: Record<string, string | number | boolean> = {}) {
+  window.OldSchoolAnalytics?.track(eventName, parameters);
+}
+
 interface AuthSession {
   access_token: string;
   refresh_token?: string;
@@ -94,7 +98,10 @@ interface AccountProfile {
 type CloudStatus = "Local only" | "Cloud syncing..." | "Cloud saving..." | "Cloud / Pass" | "Cloud error";
 
 declare global {
-  interface Window {
+interface Window {
+    OldSchoolAnalytics?: {
+      track: (eventName: string, parameters?: Record<string, string | number | boolean>) => void;
+    };
     OldSchoolAuthSecurity?: {
       ensure: (containerId: string, action: string) => Promise<{ enabled: boolean; token: string }>;
       reset: (containerId: string) => void;
@@ -431,6 +438,7 @@ function DetailsDrawer({
       watchedDates: movie.watchedDates.length ? [] : [today],
       watchNext: movie.watchedDates.length ? movie.watchNext : false,
     });
+    track("movie_watched_changed", { app: "vhs-watchlist", watched: !movie.watchedDates.length });
   };
   return (
     <aside className="details-drawer" aria-label={`${movie.title} details`}>
@@ -730,6 +738,7 @@ function App() {
         refresh_token: params.get("refresh_token") || undefined,
         expires_at: Math.floor(Date.now() / 1000) + expiresIn,
       });
+      track("login_completed", { app: "vhs-watchlist", method: "oauth" });
     }
     if (error || accessToken) history.replaceState({}, "", window.location.pathname);
   }, []);
@@ -939,10 +948,12 @@ function App() {
         return;
       }
       storeSession(data as AuthSession);
+      track(action === "signup" ? "signup_completed" : "login_completed", { app: "vhs-watchlist" });
       setAuthDialogOpen(false);
       setAuthMessage("");
       setToast("Signed in. Checking your Apps Pass...");
     } catch (error) {
+      track("auth_failed", { app: "vhs-watchlist", method: "email", action });
       setAuthMessage(error instanceof Error ? error.message : "Authentication failed");
     } finally {
       setAccountBusy(false);
@@ -950,6 +961,7 @@ function App() {
   }
 
   async function startOAuth(provider: "google" | "facebook") {
+    track("login_started", { app: "vhs-watchlist", method: provider });
     setAuthMessage(`Opening ${provider === "google" ? "Google" : "Facebook"}...`);
     try {
       const response = await fetch("/api/auth", {
@@ -978,6 +990,7 @@ function App() {
   }
 
   async function startCheckout() {
+    track("checkout_started", { app: "vhs-watchlist" });
     if (!session?.access_token) {
       setUpgradeDialogOpen(false);
       setAuthDialogOpen(true);
@@ -1034,6 +1047,7 @@ function App() {
       return;
     }
     setEditingId("");
+    track("movie_create_started", { app: "vhs-watchlist" });
     setMovieDialogOpen(true);
   }
 
@@ -1045,6 +1059,7 @@ function App() {
   function changeTheme(theme: AppTheme) {
     if (theme === "dark" && !requirePass("Dark Windows theme is included with Apps Pass.")) return;
     setState((current) => ({ ...current, theme }));
+    track("theme_changed", { app: "vhs-watchlist", theme });
   }
 
   const updateMovie = (nextMovie: Movie) => {
@@ -1052,6 +1067,7 @@ function App() {
   };
 
   const quickAction = (id: string, action: "watchNext" | "watched" | "rewound" | "favorite") => {
+    track("movie_status_changed", { app: "vhs-watchlist", status: action });
     setState((current) => ({
       ...current,
       movies: current.movies.map((movie) => {
@@ -1095,6 +1111,7 @@ function App() {
       setState((current) => ({ ...current, movies: [movie, ...current.movies], onboardingDismissed: true }));
       setSelectedId(movie.id);
       setToast(`${movie.title} added to the rental floor.`);
+      track("movie_added", { app: "vhs-watchlist" });
     }
     setMovieDialogOpen(false);
     setEditingId("");
@@ -1106,6 +1123,7 @@ function App() {
     if (selectedId === deleteMovie.id) setSelectedId("");
     setDeleteId("");
     setToast("Tape deleted.");
+    track("movie_deleted", { app: "vhs-watchlist" });
   };
 
   const selectCollection = (collection: CollectionFilter) => {
@@ -1159,6 +1177,7 @@ function App() {
     anchor.click();
     URL.revokeObjectURL(url);
     setToast("Library exported.");
+    track("export_requested", { app: "vhs-watchlist", format: "json" });
   };
 
   const importLibrary = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -1177,6 +1196,7 @@ function App() {
       setSelectedId("");
       setSettingsOpen(false);
       setToast(`Imported ${parsed.movies.length} tapes successfully.`);
+      track("library_imported", { app: "vhs-watchlist", count: parsed.movies.length });
     } catch {
       setToast("Invalid import file. No library data was changed.");
     }

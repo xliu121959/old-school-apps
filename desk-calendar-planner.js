@@ -3,6 +3,10 @@ const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
 const PLANNER_STATE_ENDPOINT = "/api/state?app=desk-calendar-planner";
 const PREMIUM_THEMES = new Set(["night", "executive"]);
 
+function track(eventName, parameters = {}) {
+  window.OldSchoolAnalytics?.track(eventName, parameters);
+}
+
 const plannerState = loadPlannerState();
 const authState = {
   session: loadSession(),
@@ -443,6 +447,7 @@ async function finishSignIn(session) {
   elements.authDialog.close();
   await loadAccount();
   if (isPro()) await syncCloudState();
+  track("login_completed", { app: "desk-calendar-planner" });
   renderAccountState();
   showToast(isPro() ? "Signed in. Cloud planner is on." : "Signed in. Local planning remains free.");
 }
@@ -483,11 +488,13 @@ async function submitAuth(action) {
     elements.authMessage.textContent = "";
     await finishSignIn(data);
   } catch (error) {
+    track("auth_failed", { app: "desk-calendar-planner", method: "email", action });
     elements.authMessage.textContent = error.message;
   }
 }
 
 async function startOAuth(provider) {
+  track("login_started", { app: "desk-calendar-planner", method: provider });
   elements.authMessage.textContent = `Opening ${provider === "google" ? "Google" : "Facebook"}...`;
   try {
     const response = await fetch("/api/auth", {
@@ -514,6 +521,7 @@ function signOut(showMessage = true) {
 }
 
 async function startCheckout() {
+  track("checkout_started", { app: "desk-calendar-planner" });
   if (!authState.session?.access_token) {
     elements.upgradeDialog.close();
     elements.authDialog.showModal();
@@ -1006,9 +1014,9 @@ function escapeHtml(value) {
 }
 
 elements.todayButton.addEventListener("click", () => selectDate(localDateKey(new Date())));
-elements.newTaskButton.addEventListener("click", () => openTaskDialog());
+elements.newTaskButton.addEventListener("click", () => { track("task_create_started", { app: "desk-calendar-planner" }); openTaskDialog(); });
 elements.inlineTaskButton.addEventListener("click", () => openTaskDialog());
-elements.newEventButton.addEventListener("click", () => openEventDialog());
+elements.newEventButton.addEventListener("click", () => { track("event_create_started", { app: "desk-calendar-planner" }); openEventDialog(); });
 elements.inlineEventButton.addEventListener("click", () => openEventDialog());
 
 elements.themeSelect.addEventListener("change", () => {
@@ -1021,6 +1029,7 @@ elements.themeSelect.addEventListener("change", () => {
   plannerState.theme = nextTheme;
   render();
   scheduleSave();
+  track("theme_changed", { app: "desk-calendar-planner", theme: plannerState.theme });
 });
 
 elements.viewButtons.forEach((button) => {
@@ -1088,6 +1097,7 @@ elements.taskList.addEventListener("change", (event) => {
   if (!task) return;
   recordHistory(`Before ${event.target.checked ? "completing" : "reopening"} ${task.title}`);
   task.completed = event.target.checked;
+  track("task_completed_changed", { app: "desk-calendar-planner", completed: task.completed });
   render();
   scheduleSave();
 });
@@ -1172,6 +1182,7 @@ elements.taskForm.addEventListener("submit", (event) => {
       priority: elements.taskPriorityInput.checked,
       tags,
     });
+    track("task_created", { app: "desk-calendar-planner" });
   }
   elements.taskDialog.close();
   render();
@@ -1198,6 +1209,7 @@ elements.eventForm.addEventListener("submit", (event) => {
       title: elements.eventTitleInput.value.trim(),
       reminder: elements.eventReminderInput.value,
     });
+    track("event_created", { app: "desk-calendar-planner" });
   }
   elements.eventDialog.close();
   render();
@@ -1221,6 +1233,7 @@ elements.exportOptions.forEach((button) => {
     elements.exportDialog.close();
     if (button.dataset.export === "text") downloadTextExport();
     if (button.dataset.export === "pdf") openPdfExport();
+    track("export_requested", { app: "desk-calendar-planner", format: button.dataset.export });
   });
 });
 
