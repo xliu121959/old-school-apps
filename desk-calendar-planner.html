@@ -298,6 +298,7 @@
             Password
             <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required />
           </label>
+          <div class="auth-captcha" id="plannerAuthCaptcha" hidden></div>
           <p class="dialog-message" id="authMessage" role="status"></p>
           <div class="dialog-actions split-actions">
             <button class="office-button" id="signUpButton" type="button">Create Account</button>
@@ -373,6 +374,7 @@
     </dialog>
 
     <div class="planner-toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="auth-security.js"></script>
     <script src="desk-calendar-planner.js"></script>
   </body>
 </html>

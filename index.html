@@ -232,6 +232,7 @@
             <span>Password</span>
             <input id="catalogAuthPassword" type="password" autocomplete="current-password" minlength="8" required />
           </label>
+          <div class="auth-captcha" id="catalogAuthCaptcha" hidden></div>
           <p class="catalog-message" id="catalogAuthMessage" role="status"></p>
           <div class="catalog-dialog-actions">
             <button class="primary-action" type="submit">Sign In</button>
@@ -279,6 +280,7 @@
       </div>
     </dialog>
 
-    <script src="script.js?v=20260724-paid-downloads"></script>
+    <script src="auth-security.js"></script>
+    <script src="script.js?v=20260730-auth-security"></script>
   </body>
 </html>

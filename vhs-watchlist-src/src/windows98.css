@@ -1156,6 +1156,19 @@ a:focus-visible {
   color: #800000 !important;
 }
 
+.auth-captcha {
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-captcha[hidden] {
+  display: none;
+}
+
+.auth-captcha iframe {
+  max-width: 100%;
+}
+
 .account-email {
   overflow-wrap: anywhere;
   font-weight: 700;

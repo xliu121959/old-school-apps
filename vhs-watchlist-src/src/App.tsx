@@ -92,6 +92,17 @@ interface AccountProfile {
 }
 
 type CloudStatus = "Local only" | "Cloud syncing..." | "Cloud saving..." | "Cloud / Pass" | "Cloud error";
+
+declare global {
+  interface Window {
+    OldSchoolAuthSecurity?: {
+      ensure: (containerId: string, action: string) => Promise<{ enabled: boolean; token: string }>;
+      reset: (containerId: string) => void;
+      token: (containerId: string) => string;
+    };
+  }
+}
+
 const labels: RentalLabel[] = [
   "None",
   "Staff Pick",
@@ -899,15 +910,32 @@ function App() {
     setAuthMessage(action === "signup" ? "Creating account..." : "Signing in...");
     setAccountBusy(true);
     try {
+      const security = window.OldSchoolAuthSecurity;
+      let captchaToken = security?.token("vhsAuthCaptcha") || "";
+      if (action === "signup" && security) {
+        const challenge = await security.ensure("vhsAuthCaptcha", "signup");
+        captchaToken = challenge.token;
+        if (challenge.enabled && !captchaToken) {
+          setAuthMessage("Complete the security check, then select Create Account again.");
+          return;
+        }
+      }
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, email: authEmail.trim(), password: authPassword }),
+        body: JSON.stringify({ action, email: authEmail.trim(), password: authPassword, captchaToken }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Authentication failed");
+      if (!response.ok) {
+        if (data.code === "captcha_required" && security) {
+          await security.ensure("vhsAuthCaptcha", "login");
+        }
+        if (captchaToken) security?.reset("vhsAuthCaptcha");
+        throw new Error(data.error || "Authentication failed");
+      }
+      if (captchaToken) security?.reset("vhsAuthCaptcha");
       if (!data.access_token) {
-        setAuthMessage("Check your email to confirm the account, then sign in.");
+        setAuthMessage(data.message || "If this email is eligible, confirmation instructions were sent.");
         return;
       }
       storeSession(data as AuthSession);
@@ -1342,6 +1370,7 @@ function App() {
               <div className="auth-divider"><span>or use email</span></div>
               <label>Email<input type="email" autoComplete="email" required value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} /></label>
               <label>Password<input type="password" autoComplete="current-password" minLength={8} required value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} /></label>
+              <div className="auth-captcha" id="vhsAuthCaptcha" hidden />
               <p className="account-message" role="status">{authMessage}</p>
               <div className="modal-actions"><button type="button" disabled={accountBusy} onClick={() => void submitAuth("signup")}>Create Account</button><button type="submit" className="primary" disabled={accountBusy}>Sign In</button></div>
             </form>

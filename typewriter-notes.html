@@ -203,6 +203,7 @@
           <span>Password</span>
           <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required />
         </label>
+        <div class="auth-captcha" id="typewriterAuthCaptcha" hidden></div>
         <p class="dialog-message" id="authMessage" role="status"></p>
         <div class="export-options">
           <button class="bevel-button" id="signInButton" type="submit">Sign In</button>
@@ -251,6 +252,7 @@
 
     <input id="importInput" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" multiple hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="auth-security.js"></script>
     <script src="typewriter-notes.js"></script>
   </body>
 </html>

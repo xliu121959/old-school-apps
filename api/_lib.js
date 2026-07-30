@@ -16,11 +16,13 @@ function allowMethods(request, response, methods) {
 }
 
 async function supabaseRequest(path, options = {}, useServiceRole = false) {
-  const key = requiredEnv(useServiceRole ? "SUPABASE_SERVICE_ROLE_KEY" : "SUPABASE_ANON_KEY");
+  const key = useServiceRole
+    ? process.env.SUPABASE_SECRET_KEY || requiredEnv("SUPABASE_SERVICE_ROLE_KEY")
+    : requiredEnv("SUPABASE_ANON_KEY");
   const headers = {
     apikey: key,
     "Content-Type": "application/json",
-    ...(useServiceRole ? { Authorization: `Bearer ${key}` } : {}),
+    ...(useServiceRole && !key.startsWith("sb_secret_") ? { Authorization: `Bearer ${key}` } : {}),
     ...options.headers,
   };
   const response = await fetch(`${requiredEnv("SUPABASE_URL")}${path}`, {
@@ -59,6 +61,11 @@ async function requireUser(request) {
   const user = await supabaseRequest("/auth/v1/user", {
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (!user.email_confirmed_at && !user.confirmed_at) {
+    const error = new Error("Verify your email before using cloud features");
+    error.status = 403;
+    throw error;
+  }
   return { token, user };
 }
 

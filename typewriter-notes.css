@@ -728,6 +728,20 @@ body.focus-mode .paper-frame {
   font-weight: 700;
 }
 
+.auth-captcha {
+  width: 100%;
+  min-width: 0;
+  margin: 8px 0;
+}
+
+.auth-captcha[hidden] {
+  display: none;
+}
+
+.auth-captcha iframe {
+  max-width: 100%;
+}
+
 .social-auth {
   display: grid;
   grid-template-columns: 1fr 1fr;

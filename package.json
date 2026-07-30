@@ -5,6 +5,7 @@
   "description": "Old School Apps catalog and Typewriter Notes web app",
   "scripts": {
     "check": "node --check typewriter-notes.js && node --check desk-calendar-planner.js && node --check script.js && node --check api/*.js && tsc -p vhs-watchlist-src/tsconfig.json",
+    "test:security": "node --test tests/auth-security.test.js",
     "dev:vhs": "vite --config vhs-watchlist-src/vite.config.ts",
     "build:vhs": "vite build --config vhs-watchlist-src/vite.config.ts"
   },

@@ -223,8 +223,18 @@ async function loadAccount() {
 }
 
 async function submitAuth(action) {
+  const security = window.OldSchoolAuthSecurity;
   elements.authMessage.textContent = action === "signup" ? "Creating account..." : "Signing in...";
   try {
+    let captchaToken = security?.token("catalogAuthCaptcha") || "";
+    if (action === "signup" && security) {
+      const challenge = await security.ensure("catalogAuthCaptcha", "signup");
+      captchaToken = challenge.token;
+      if (challenge.enabled && !captchaToken) {
+        elements.authMessage.textContent = "Complete the security check, then select Create Account again.";
+        return;
+      }
+    }
     const response = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -232,12 +242,20 @@ async function submitAuth(action) {
         action,
         email: elements.authEmail.value.trim(),
         password: elements.authPassword.value,
+        captchaToken,
       }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "Authentication failed");
+    if (!response.ok) {
+      if (data.code === "captcha_required" && security) {
+        await security.ensure("catalogAuthCaptcha", "login");
+      }
+      if (captchaToken) security?.reset("catalogAuthCaptcha");
+      throw new Error(data.error || "Authentication failed");
+    }
+    if (captchaToken) security?.reset("catalogAuthCaptcha");
     if (!data.access_token) {
-      elements.authMessage.textContent = "Check your email to confirm the account, then sign in.";
+      elements.authMessage.textContent = data.message || "If this email is eligible, confirmation instructions were sent.";
       return;
     }
     setSession(data);

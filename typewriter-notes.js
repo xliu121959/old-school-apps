@@ -571,17 +571,34 @@ async function finishSignIn(session) {
 async function submitAuth(action) {
   const email = elements.authEmail.value.trim();
   const password = elements.authPassword.value;
+  const security = window.OldSchoolAuthSecurity;
   elements.authMessage.textContent = action === "signup" ? "Creating account..." : "Signing in...";
   try {
+    let captchaToken = security?.token("typewriterAuthCaptcha") || "";
+    if (action === "signup" && security) {
+      const challenge = await security.ensure("typewriterAuthCaptcha", "signup");
+      captchaToken = challenge.token;
+      if (challenge.enabled && !captchaToken) {
+        elements.authMessage.textContent = "Complete the security check, then select Create Account again.";
+        return;
+      }
+    }
     const response = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, email, password }),
+      body: JSON.stringify({ action, email, password, captchaToken }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "Authentication failed");
+    if (!response.ok) {
+      if (data.code === "captcha_required" && security) {
+        await security.ensure("typewriterAuthCaptcha", "login");
+      }
+      if (captchaToken) security?.reset("typewriterAuthCaptcha");
+      throw new Error(data.error || "Authentication failed");
+    }
+    if (captchaToken) security?.reset("typewriterAuthCaptcha");
     if (!data.access_token) {
-      elements.authMessage.textContent = "Check your email to confirm the account, then sign in.";
+      elements.authMessage.textContent = data.message || "If this email is eligible, confirmation instructions were sent.";
       return;
     }
     elements.authMessage.textContent = "";
