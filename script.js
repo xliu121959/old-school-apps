@@ -109,6 +109,7 @@ const elements = {
   checkoutButton: document.querySelector("#catalogCheckoutButton"),
   closeUpgradeButton: document.querySelector("#closeCatalogUpgradeButton"),
   feedbackButton: document.querySelector("#catalogFeedbackButton"),
+  feedbackFloatButton: document.querySelector("#catalogFeedbackFloatButton"),
   feedbackDialog: document.querySelector("#catalogFeedbackDialog"),
   feedbackForm: document.querySelector("#catalogFeedbackForm"),
   feedbackType: document.querySelector("#catalogFeedbackType"),
@@ -412,11 +413,13 @@ elements.billingButton.addEventListener("click", openBilling);
 elements.closeAuthButton.addEventListener("click", () => elements.authDialog.close());
 elements.closeAccountButton.addEventListener("click", () => elements.accountDialog.close());
 elements.closeUpgradeButton.addEventListener("click", () => elements.upgradeDialog.close());
-elements.feedbackButton.addEventListener("click", () => {
+function openFeedbackDialog() {
   track("feedback_opened", { source: "catalog" });
   elements.feedbackDialog.showModal();
   elements.feedbackMessage.focus();
-});
+}
+elements.feedbackButton.addEventListener("click", openFeedbackDialog);
+elements.feedbackFloatButton.addEventListener("click", openFeedbackDialog);
 elements.closeFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
 elements.cancelFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
 elements.feedbackForm.addEventListener("submit", (event) => {

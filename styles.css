@@ -184,6 +184,27 @@ a {
   background: #ffff7a;
 }
 
+.feedback-button {
+  background: #ffff00 !important;
+  color: #000 !important;
+  font-weight: 800 !important;
+}
+
+.feedback-float {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 25;
+  min-height: 42px;
+  padding: 9px 15px;
+  border-width: 3px;
+  box-shadow: inset -2px -2px 0 var(--win-face-dark), inset 2px 2px 0 var(--win-highlight), 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.feedback-float:hover {
+  filter: brightness(1.08) saturate(1.15);
+}
+
 .main-nav button,
 .download-link,
 .primary-action {
@@ -1296,6 +1317,11 @@ body.pass-active .paid-download::after {
 
   .site-footer nav {
     justify-content: flex-start;
+  }
+
+  .feedback-float {
+    right: 12px;
+    bottom: 12px;
   }
 }
 
