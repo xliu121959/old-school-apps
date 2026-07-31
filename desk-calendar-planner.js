@@ -344,7 +344,10 @@ async function apiRequest(path, options = {}, retry = true) {
     return apiRequest(path, options, false);
   }
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok) {
+    track("api_error", { app: "desk-calendar-planner", endpoint: path, status: response.status });
+    throw new Error(data.error || "Request failed");
+  }
   return data;
 }
 
@@ -399,8 +402,10 @@ async function saveCloudState() {
       body: JSON.stringify({ state: plannerState }),
     });
     elements.cloudState.textContent = "Cloud / Pass";
+    track("cloud_sync_succeeded", { app: "desk-calendar-planner", direction: "save" });
   } catch (error) {
     elements.cloudState.textContent = "Cloud error";
+    track("cloud_sync_failed", { app: "desk-calendar-planner", direction: "save" });
     showToast(error.message);
   }
 }
@@ -414,6 +419,7 @@ async function syncCloudState() {
     localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(plannerState));
     render();
     showToast("Cloud planner restored.");
+    track("cloud_sync_succeeded", { app: "desk-calendar-planner", direction: "restore" });
   } else {
     await saveCloudState();
   }
@@ -537,12 +543,14 @@ async function startCheckout() {
     });
     window.location.href = data.url;
   } catch (error) {
+    track("checkout_error", { app: "desk-calendar-planner" });
     elements.upgradeMessage.textContent = error.message;
     elements.checkoutButton.disabled = false;
   }
 }
 
 async function openBillingPortal() {
+  track("billing_portal_opened", { app: "desk-calendar-planner" });
   elements.accountMessage.textContent = "Opening billing...";
   try {
     const data = await apiRequest("/api/create-portal-session", {
@@ -551,6 +559,7 @@ async function openBillingPortal() {
     });
     window.location.href = data.url;
   } catch (error) {
+    track("billing_portal_error", { app: "desk-calendar-planner" });
     elements.accountMessage.textContent = error.message;
   }
 }
@@ -857,6 +866,7 @@ function selectDate(key) {
   ensureDay(key);
   render();
   scheduleSave();
+  track("day_selected", { app: "desk-calendar-planner" });
 }
 
 function renderHistory() {
@@ -1037,6 +1047,7 @@ elements.viewButtons.forEach((button) => {
     plannerState.view = button.dataset.view;
     renderViewState();
     scheduleSave();
+    track("view_changed", { app: "desk-calendar-planner", view: plannerState.view });
   });
 });
 
@@ -1122,6 +1133,7 @@ elements.taskList.addEventListener("click", (event) => {
     day.tasks = day.tasks.filter((entry) => entry.id !== task.id);
     render();
     scheduleSave();
+    track("task_deleted", { app: "desk-calendar-planner" });
   }
 });
 
@@ -1139,6 +1151,7 @@ elements.eventTimeline.addEventListener("click", (event) => {
     day.events = day.events.filter((entry) => entry.id !== calendarEvent.id);
     render();
     scheduleSave();
+    track("event_deleted", { app: "desk-calendar-planner" });
   }
 });
 
@@ -1281,6 +1294,7 @@ elements.closeUpgradeButton.addEventListener("click", () => elements.upgradeDial
 readOAuthCallback();
 render();
 localStorage.setItem(PLANNER_STORAGE_KEY, JSON.stringify(plannerState));
+track("app_opened", { app: "desk-calendar-planner" });
 
 if (authState.session?.access_token) {
   loadAccount()

@@ -483,7 +483,10 @@ async function apiRequest(path, options = {}, retry = true) {
     return apiRequest(path, options, false);
   }
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok) {
+    track("api_error", { app: "typewriter-notes", endpoint: path, status: response.status });
+    throw new Error(data.error || "Request failed");
+  }
   return data;
 }
 
@@ -539,8 +542,10 @@ async function saveCloudState() {
       body: JSON.stringify({ state }),
     });
     elements.cloudState.textContent = isPro() ? "Cloud / Pass" : "Cloud / Free";
+    track("cloud_sync_succeeded", { app: "typewriter-notes", direction: "save" });
   } catch (error) {
     elements.cloudState.textContent = "Cloud error";
+    track("cloud_sync_failed", { app: "typewriter-notes", direction: "save" });
     showToast(error.message);
   }
 }
@@ -554,6 +559,7 @@ async function syncCloudState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     render();
     showToast("Cloud writing restored.");
+    track("cloud_sync_succeeded", { app: "typewriter-notes", direction: "restore" });
   } else {
     await saveCloudState();
   }
@@ -661,17 +667,20 @@ async function startCheckout() {
     const data = await apiRequest("/api/create-checkout-session", { method: "POST" });
     window.location.href = data.url;
   } catch (error) {
+    track("checkout_error", { app: "typewriter-notes" });
     elements.upgradeMessage.textContent = error.message;
     elements.checkoutButton.disabled = false;
   }
 }
 
 async function openBillingPortal() {
+  track("billing_portal_opened", { app: "typewriter-notes" });
   elements.accountMessage.textContent = "Opening billing...";
   try {
     const data = await apiRequest("/api/create-portal-session", { method: "POST" });
     window.location.href = data.url;
   } catch (error) {
+    track("billing_portal_error", { app: "typewriter-notes" });
     elements.accountMessage.textContent = error.message;
   }
 }
@@ -742,12 +751,14 @@ async function exportCurrentNote(format) {
   if (format === "txt") {
     downloadFile(`${baseName}.txt`, note.body, "text/plain;charset=utf-8");
     showToast("Downloaded TXT export.");
+    track("export_completed", { app: "typewriter-notes", format });
     return;
   }
 
   if (format === "markdown") {
     downloadFile(`${baseName}.md`, `# ${note.title}\n\n${note.body}`, "text/markdown;charset=utf-8");
     showToast("Downloaded Markdown export.");
+    track("export_completed", { app: "typewriter-notes", format });
     return;
   }
 
@@ -759,6 +770,7 @@ async function exportCurrentNote(format) {
     try {
       await loadAccount();
     } catch (error) {
+      track("export_failed", { app: "typewriter-notes", format });
       showToast(error.message);
       return;
     }
@@ -1004,11 +1016,13 @@ elements.noteList.addEventListener("click", (event) => {
   renderNoteList();
   renderEditor();
   saveState();
+  track("note_selected", { app: "typewriter-notes" });
 });
 
 elements.searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
   renderNoteList();
+  if (state.search.trim().length >= 2) track("search_used", { app: "typewriter-notes" });
 });
 
 elements.noteTitle.addEventListener("input", (event) => {
@@ -1089,7 +1103,12 @@ elements.fontFamilyControl.addEventListener("change", (event) => {
 elements.newNoteButton.addEventListener("click", createNewNote);
 elements.importButton.addEventListener("click", () => elements.importInput.click());
 elements.importInput.addEventListener("change", async (event) => {
-  await importNotes(event.target.files);
+  try {
+    await importNotes(event.target.files);
+  } catch (error) {
+    track("import_failed", { app: "typewriter-notes" });
+    showToast(error.message);
+  }
   event.target.value = "";
 });
 elements.exportButton.addEventListener("click", openExportDialog);
@@ -1147,6 +1166,7 @@ elements.notebookDialog.addEventListener("close", () => {
 
 readOAuthCallback();
 render();
+track("app_opened", { app: "typewriter-notes" });
 
 if (authState.session?.access_token) {
   loadAccount()

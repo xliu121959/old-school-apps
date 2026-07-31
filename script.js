@@ -240,6 +240,7 @@ async function loadAccount() {
 }
 
 async function submitAuth(action) {
+  track(action === "signup" ? "signup_started" : "login_started", { method: "email" });
   const security = window.OldSchoolAuthSecurity;
   elements.authMessage.textContent = action === "signup" ? "Creating account..." : "Signing in...";
   try {
@@ -298,6 +299,7 @@ async function startOAuth(provider) {
     if (!response.ok) throw new Error(data.error || "Social sign-in is unavailable");
     window.location.assign(data.url);
   } catch (error) {
+    track("auth_failed", { method: provider, action: "oauth" });
     elements.authMessage.textContent = error.message;
   }
 }
@@ -324,17 +326,20 @@ async function startCheckout() {
     const data = await apiRequest("/api/create-checkout-session", { method: "POST" });
     window.location.assign(data.url);
   } catch (error) {
+    track("checkout_error", { source: "catalog" });
     elements.upgradeMessage.textContent = error.message;
     elements.checkoutButton.disabled = false;
   }
 }
 
 async function openBilling() {
+  track("billing_portal_opened", { source: "catalog" });
   elements.accountMessage.textContent = "Opening billing...";
   try {
     const data = await apiRequest("/api/create-portal-session", { method: "POST" });
     window.location.assign(data.url);
   } catch (error) {
+    track("billing_portal_error", { source: "catalog" });
     elements.accountMessage.textContent = error.message;
   }
 }
@@ -360,7 +365,9 @@ async function requestDownload(id, button) {
       body: JSON.stringify({ id }),
     });
     window.location.assign(data.url);
+    track("download_ready", { download_id: id });
   } catch (error) {
+    track("download_failed", { download_id: id });
     elements.upgradeMessage.textContent = error.message;
     elements.upgradeDialog.showModal();
   } finally {
@@ -452,11 +459,14 @@ elements.feedbackForm.addEventListener("submit", async (event) => {
       elements.feedbackStatus.textContent = "";
     }, 900);
   } catch (error) {
+    track("feedback_failed", { source: "catalog" });
     elements.feedbackStatus.textContent = error.message;
   } finally {
     elements.submitFeedbackButton.disabled = false;
   }
 });
+
+track("app_opened", { app: "catalog" });
 
 if (authState.session?.access_token) {
   loadAccount().catch(() => signOut(false));

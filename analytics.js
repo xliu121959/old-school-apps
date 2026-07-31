@@ -28,6 +28,14 @@
 
   window.OldSchoolAnalytics = { track };
 
+  window.addEventListener("error", () => track("javascript_error", {
+    page_path: window.location.pathname,
+  }));
+  window.addEventListener("unhandledrejection", () => track("javascript_error", {
+    page_path: window.location.pathname,
+    error_type: "unhandled_rejection",
+  }));
+
   document.addEventListener("click", (event) => {
     const control = event.target.closest("[data-analytics-event]");
     if (!control) return;

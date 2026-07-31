@@ -705,6 +705,10 @@ function App() {
   );
 
   useEffect(() => {
+    track("app_opened", { app: "vhs-watchlist" });
+  }, []);
+
+  useEffect(() => {
     const persisted = { ...state, clientUpdatedAt: Math.max(Date.now(), Number(state.clientUpdatedAt) || 0) };
     latestStateRef.current = persisted;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
@@ -855,7 +859,10 @@ function App() {
       return apiRequest(path, options, false);
     }
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "Request failed");
+    if (!response.ok) {
+      track("api_error", { app: "vhs-watchlist", endpoint: path, status: response.status });
+      throw new Error(data.error || "Request failed");
+    }
     return data;
   }
 
@@ -885,9 +892,11 @@ function App() {
         body: JSON.stringify({ state: snapshot }),
       });
       setCloudStatus("Cloud / Pass");
+      track("cloud_sync_succeeded", { app: "vhs-watchlist", direction: "save" });
     } catch (error) {
       setCloudStatus("Cloud error");
       setToast(error instanceof Error ? error.message : "Cloud save failed");
+      track("cloud_sync_failed", { app: "vhs-watchlist", direction: "save" });
     }
   }
 
@@ -903,6 +912,7 @@ function App() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(restored));
         setState(restored);
         setToast("Cloud VHS library restored.");
+        track("cloud_sync_succeeded", { app: "vhs-watchlist", direction: "restore" });
       } else {
         await saveCloudState(local);
       }
@@ -1006,12 +1016,14 @@ function App() {
       });
       window.location.href = data.url;
     } catch (error) {
+      track("checkout_error", { app: "vhs-watchlist" });
       setUpgradeMessage(error instanceof Error ? error.message : "Checkout is unavailable");
       setAccountBusy(false);
     }
   }
 
   async function openBillingPortal() {
+    track("billing_portal_opened", { app: "vhs-watchlist" });
     setAccountBusy(true);
     setAccountMessage("Opening billing...");
     try {
@@ -1021,6 +1033,7 @@ function App() {
       });
       window.location.href = data.url;
     } catch (error) {
+      track("billing_portal_error", { app: "vhs-watchlist" });
       setAccountMessage(error instanceof Error ? error.message : "Billing is unavailable");
       setAccountBusy(false);
     }
@@ -1067,7 +1080,7 @@ function App() {
   };
 
   const quickAction = (id: string, action: "watchNext" | "watched" | "rewound" | "favorite") => {
-    track("movie_status_changed", { app: "vhs-watchlist", status: action });
+    track(action === "watched" ? "movie_marked_watched" : action === "rewound" ? "movie_rewound" : action === "favorite" ? "movie_favorited" : "watch_next_changed", { app: "vhs-watchlist" });
     setState((current) => ({
       ...current,
       movies: current.movies.map((movie) => {
@@ -1198,6 +1211,7 @@ function App() {
       setToast(`Imported ${parsed.movies.length} tapes successfully.`);
       track("library_imported", { app: "vhs-watchlist", count: parsed.movies.length });
     } catch {
+      track("import_failed", { app: "vhs-watchlist" });
       setToast("Invalid import file. No library data was changed.");
     }
   };
@@ -1235,14 +1249,14 @@ function App() {
         <button className="mobile-menu" type="button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Menu size={20} /></button>
         <label className="search-control">
           <Search size={17} />
-          <input aria-label="Search movie library" value={state.search} placeholder="Search title, genre, director, label..." onChange={(event) => setState({ ...state, search: event.target.value })} />
+          <input aria-label="Search movie library" value={state.search} placeholder="Search title, genre, director, label..." onChange={(event) => { setState({ ...state, search: event.target.value }); if (event.target.value.trim().length >= 2) track("search_used", { app: "vhs-watchlist" }); }} />
           {state.search && <button type="button" aria-label="Clear search" onClick={() => setState({ ...state, search: "" })}><X size={15} /></button>}
         </label>
         <button className="add-movie-button" type="button" onClick={openNewMovie}><Plus size={17} /> Add Movie</button>
         <div className="view-controls" role="group" aria-label="Library view">
-          <IconButton label="Shelf view" active={state.view === "shelf"} onClick={() => setState({ ...state, view: "shelf" })}><Rows3 size={17} /></IconButton>
-          <IconButton label="Grid view" active={state.view === "grid"} onClick={() => setState({ ...state, view: "grid" })}><LayoutGrid size={17} /></IconButton>
-          <IconButton label="List view" active={state.view === "list"} onClick={() => setState({ ...state, view: "list" })}><List size={17} /></IconButton>
+          <IconButton label="Shelf view" active={state.view === "shelf"} onClick={() => { setState({ ...state, view: "shelf" }); track("view_changed", { app: "vhs-watchlist", view: "shelf" }); }}><Rows3 size={17} /></IconButton>
+          <IconButton label="Grid view" active={state.view === "grid"} onClick={() => { setState({ ...state, view: "grid" }); track("view_changed", { app: "vhs-watchlist", view: "grid" }); }}><LayoutGrid size={17} /></IconButton>
+          <IconButton label="List view" active={state.view === "list"} onClick={() => { setState({ ...state, view: "list" }); track("view_changed", { app: "vhs-watchlist", view: "list" }); }}><List size={17} /></IconButton>
         </div>
         <IconButton label="Filter library" active={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}><Filter size={18} /></IconButton>
         <IconButton label="Settings" onClick={() => setSettingsOpen(true)}><Settings size={18} /></IconButton>
