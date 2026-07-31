@@ -1,4 +1,5 @@
 const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const CHECKOUT_SESSION_KEY = "old-school-checkout-in-progress";
 
 function track(eventName, parameters = {}) {
   window.OldSchoolAnalytics?.track(eventName, parameters);
@@ -327,6 +328,7 @@ async function startCheckout() {
       method: "POST",
       body: JSON.stringify({ returnTo: "/index.html" }),
     });
+    sessionStorage.setItem(CHECKOUT_SESSION_KEY, "1");
     window.location.assign(data.url);
   } catch (error) {
     track("checkout_error", { source: "catalog" });
@@ -477,10 +479,18 @@ if (authState.session?.access_token) {
 
 const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
 if (checkoutResult === "success") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   elements.upgradeMessage.textContent = "Payment received. Activating your Apps Pass...";
   elements.upgradeDialog.showModal();
   setTimeout(() => loadAccount().then(() => elements.upgradeDialog.close()).catch(() => {}), 1200);
 }
 if (checkoutResult === "cancelled") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   track("checkout_cancelled", { source: "catalog" });
 }
+
+window.addEventListener("pageshow", () => {
+  if (checkoutResult || sessionStorage.getItem(CHECKOUT_SESSION_KEY) !== "1") return;
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+  track("checkout_cancelled", { source: "catalog", return_method: "browser_back" });
+});
