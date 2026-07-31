@@ -108,6 +108,14 @@ const elements = {
   upgradeMessage: document.querySelector("#catalogUpgradeMessage"),
   checkoutButton: document.querySelector("#catalogCheckoutButton"),
   closeUpgradeButton: document.querySelector("#closeCatalogUpgradeButton"),
+  feedbackButton: document.querySelector("#catalogFeedbackButton"),
+  feedbackDialog: document.querySelector("#catalogFeedbackDialog"),
+  feedbackForm: document.querySelector("#catalogFeedbackForm"),
+  feedbackType: document.querySelector("#catalogFeedbackType"),
+  feedbackMessage: document.querySelector("#catalogFeedbackMessage"),
+  feedbackEmail: document.querySelector("#catalogFeedbackEmail"),
+  closeFeedbackButton: document.querySelector("#closeCatalogFeedbackButton"),
+  cancelFeedbackButton: document.querySelector("#cancelCatalogFeedbackButton"),
 };
 
 function loadSession() {
@@ -404,6 +412,25 @@ elements.billingButton.addEventListener("click", openBilling);
 elements.closeAuthButton.addEventListener("click", () => elements.authDialog.close());
 elements.closeAccountButton.addEventListener("click", () => elements.accountDialog.close());
 elements.closeUpgradeButton.addEventListener("click", () => elements.upgradeDialog.close());
+elements.feedbackButton.addEventListener("click", () => {
+  track("feedback_opened", { source: "catalog" });
+  elements.feedbackDialog.showModal();
+  elements.feedbackMessage.focus();
+});
+elements.closeFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
+elements.cancelFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
+elements.feedbackForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const type = elements.feedbackType.value;
+  const message = elements.feedbackMessage.value.trim();
+  const email = elements.feedbackEmail.value.trim();
+  const subject = encodeURIComponent(`[Old School Apps] ${type}`);
+  const body = encodeURIComponent(`${message}${email ? `\n\nReply to: ${email}` : ""}`);
+  track("feedback_submitted", { source: "catalog", feedback_type: type });
+  window.location.href = `mailto:hello@example.com?subject=${subject}&body=${body}`;
+  elements.feedbackDialog.close();
+  elements.feedbackForm.reset();
+});
 
 if (authState.session?.access_token) {
   loadAccount().catch(() => signOut(false));

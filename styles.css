@@ -1096,6 +1096,30 @@ h1 {
   font: inherit;
 }
 
+.catalog-field select,
+.catalog-field textarea {
+  width: 100%;
+  padding: 6px 7px;
+  color: #000;
+  background: #fff;
+  border-color: var(--win-shadow) var(--win-highlight) var(--win-highlight) var(--win-shadow);
+  border-style: solid;
+  border-width: 2px;
+  font: inherit;
+  resize: vertical;
+}
+
+.catalog-field textarea {
+  min-height: 120px;
+  line-height: 1.35;
+}
+
+.feedback-note {
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .social-auth {
   display: grid;
   grid-template-columns: 1fr 1fr;

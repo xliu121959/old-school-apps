@@ -9,7 +9,7 @@
     />
     <title>Old School Apps - Windows 98 Catalog</title>
     <script src="analytics.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20260723-apps-pass" />
+    <link rel="stylesheet" href="styles.css?v=20260730-feedback" />
   </head>
   <body>
     <div class="desktop-shell">
@@ -29,6 +29,7 @@
           <a href="#featured">Featured</a>
           <a href="#screens">Screens</a>
           <a href="#about">About</a>
+          <button id="catalogFeedbackButton" type="button">Feedback</button>
           <button class="pass-link" id="catalogPassButton" type="button">Apps Pass - $10/mo</button>
           <button id="catalogAccountButton" type="button">Sign In</button>
         </nav>
@@ -271,7 +272,41 @@
       </div>
     </dialog>
 
+    <dialog class="catalog-dialog feedback-dialog" id="catalogFeedbackDialog">
+      <form id="catalogFeedbackForm">
+        <div class="catalog-dialog-titlebar">
+          <strong>Old School Apps - Feedback</strong>
+          <button class="window-close" id="closeCatalogFeedbackButton" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="catalog-dialog-body">
+          <p>Tell us what worked, what broke, or what you want to see next.</p>
+          <label class="catalog-field">
+            <span>Feedback type</span>
+            <select id="catalogFeedbackType">
+              <option>General feedback</option>
+              <option>Bug report</option>
+              <option>Feature request</option>
+              <option>Download issue</option>
+            </select>
+          </label>
+          <label class="catalog-field">
+            <span>Your message</span>
+            <textarea id="catalogFeedbackMessage" rows="6" maxlength="2000" required placeholder="Write your feedback here..."></textarea>
+          </label>
+          <label class="catalog-field">
+            <span>Email (optional)</span>
+            <input id="catalogFeedbackEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <p class="feedback-note">Your email is only included so we can reply.</p>
+          <div class="catalog-dialog-actions">
+            <button class="primary-action" type="submit">Send Feedback</button>
+            <button class="primary-action" id="cancelCatalogFeedbackButton" type="button">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
     <script src="auth-security.js"></script>
-    <script src="script.js?v=20260730-auth-security"></script>
+    <script src="script.js?v=20260730-feedback"></script>
   </body>
 </html>
