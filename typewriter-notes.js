@@ -136,6 +136,7 @@ const elements = {
   themeSelect: document.querySelector("#themeSelect"),
   themeState: document.querySelector("#themeState"),
   newNoteButton: document.querySelector("#newNoteButton"),
+  deleteNoteButton: document.querySelector("#deleteNoteButton"),
   exportButton: document.querySelector("#exportButton"),
   importButton: document.querySelector("#importButton"),
   importInput: document.querySelector("#importInput"),
@@ -852,6 +853,40 @@ function createNewNote() {
   elements.noteTitle.focus();
 }
 
+function deleteActiveNote() {
+  const note = getActiveNote();
+  if (!note) return;
+  if (!window.confirm(`Delete "${note.title}"? This cannot be undone.`)) {
+    track("note_delete_cancelled", { app: "typewriter-notes" });
+    return;
+  }
+
+  const remaining = state.notes.filter((item) => item.id !== note.id);
+  if (remaining.length) {
+    state.notes = remaining;
+    state.activeNoteId = remaining[0].id;
+  } else {
+    const now = formatDateNow();
+    const replacement = {
+      id: `draft-${Date.now()}`,
+      title: "Untitled Draft",
+      notebook: state.activeNotebook === "All Notes" ? "Journal" : state.activeNotebook,
+      date: "Today",
+      created: now,
+      modified: now,
+      tags: ["draft"],
+      body: "",
+      history: [],
+    };
+    state.notes = [replacement];
+    state.activeNoteId = replacement.id;
+  }
+  saveState("Deleted");
+  render();
+  track("note_deleted", { app: "typewriter-notes" });
+  showToast("Note deleted.");
+}
+
 function openNotebookDialog(mode) {
   notebookDialogMode = mode;
   const isRename = mode === "rename";
@@ -1103,6 +1138,7 @@ elements.fontFamilyControl.addEventListener("change", (event) => {
 });
 
 elements.newNoteButton.addEventListener("click", createNewNote);
+elements.deleteNoteButton.addEventListener("click", deleteActiveNote);
 elements.importButton.addEventListener("click", () => elements.importInput.click());
 elements.importInput.addEventListener("change", async (event) => {
   try {
