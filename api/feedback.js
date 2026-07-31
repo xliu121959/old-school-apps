@@ -27,7 +27,7 @@ function bucketForIp(request) {
     .digest("hex");
 }
 
-async function consumeFeedbackLimit(request) {
+async function consumeFeedbackLimit(request, response) {
   const result = await supabaseRequest("/rest/v1/rpc/consume_auth_attempt", {
     method: "POST",
     body: JSON.stringify({
@@ -37,11 +37,21 @@ async function consumeFeedbackLimit(request) {
     }),
   }, true);
   const state = Array.isArray(result) ? result[0] : result;
-  if (state && !state.allowed) {
-    const error = new Error("Too many submissions. Please try again later.");
-    error.status = 429;
+  if (!state || typeof state.allowed !== "boolean") {
+    const error = new Error("Rate limit service unavailable");
+    error.status = 503;
     throw error;
   }
+  if (state && !state.allowed) {
+    const retryAfter = Math.max(1, Number(state.retry_after_seconds) || FEEDBACK_LIMIT.windowSeconds);
+    response.setHeader("Retry-After", String(retryAfter));
+    json(response, 429, {
+      error: "Too many submissions. Please try again later.",
+      retryAfterSeconds: retryAfter,
+    });
+    return false;
+  }
+  return true;
 }
 
 function cleanText(value, maxLength) {
@@ -52,7 +62,7 @@ module.exports = async function handler(request, response) {
   if (!allowMethods(request, response, ["POST"])) return;
 
   try {
-    await consumeFeedbackLimit(request);
+    if (!await consumeFeedbackLimit(request, response)) return;
     const type = cleanText(request.body?.type, 40) || "General feedback";
     const message = cleanText(request.body?.message, 2000);
     const email = cleanText(request.body?.email, 254).toLowerCase();
