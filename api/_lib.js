@@ -98,6 +98,41 @@ function siteUrl(request) {
   return `${protocol}://${request.headers.host}`;
 }
 
+async function sendGa4Event({ eventName, eventId, userId, clientId, params = {} }) {
+  const measurementId = process.env.GA4_MEASUREMENT_ID || "G-Y9KJ0W90MZ";
+  const apiSecret = process.env.GA4_API_SECRET;
+  if (!apiSecret) {
+    console.warn(JSON.stringify({ event: "ga4_event_skipped", reason: "missing_api_secret", eventName }));
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(measurementId)}&api_secret=${encodeURIComponent(apiSecret)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: clientId || `server.${eventId}`,
+          ...(userId ? { user_id: userId } : {}),
+          events: [{
+            name: eventName,
+            params: { ...params, event_id: eventId },
+          }],
+        }),
+      },
+    );
+    if (!response.ok) {
+      console.warn(JSON.stringify({ event: "ga4_event_failed", eventName, status: response.status }));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn(JSON.stringify({ event: "ga4_event_failed", eventName, message: error.message }));
+    return false;
+  }
+}
+
 module.exports = {
   allowMethods,
   ensureProfile,
@@ -106,6 +141,7 @@ module.exports = {
   json,
   requireUser,
   requiredEnv,
+  sendGa4Event,
   siteUrl,
   supabaseRequest,
 };

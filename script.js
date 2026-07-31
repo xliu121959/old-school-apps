@@ -468,3 +468,6 @@ if (checkoutResult === "success") {
   elements.upgradeDialog.showModal();
   setTimeout(() => loadAccount().then(() => elements.upgradeDialog.close()).catch(() => {}), 1200);
 }
+if (checkoutResult === "cancelled") {
+  track("checkout_cancelled", { source: "catalog" });
+}

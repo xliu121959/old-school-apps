@@ -55,6 +55,8 @@ Add these environment variables to Production, Preview, and Development:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_ID`
+- `GA4_MEASUREMENT_ID` (optional; defaults to `G-Y9KJ0W90MZ`)
+- `GA4_API_SECRET` (required for server-side payment events)
 - `SITE_URL=https://old-school-apps.com`
 - `GOOGLE_OAUTH_ENABLED=false` until Google is configured in Supabase
 - `FACEBOOK_OAUTH_ENABLED=false` until Facebook is configured in Supabase

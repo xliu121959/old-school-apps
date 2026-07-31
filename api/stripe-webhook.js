@@ -1,5 +1,5 @@
 const Stripe = require("stripe");
-const { handleError, requiredEnv, supabaseRequest } = require("./_lib");
+const { handleError, requiredEnv, sendGa4Event, supabaseRequest } = require("./_lib");
 
 async function readRawBody(request) {
   const chunks = [];
@@ -13,6 +13,26 @@ async function updateProfile(customerId, values) {
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify({ ...values, updated_at: new Date().toISOString() }),
   }, true);
+}
+
+async function profileForCustomer(customerId) {
+  const rows = await supabaseRequest(
+    `/rest/v1/profiles?stripe_customer_id=eq.${encodeURIComponent(customerId)}&select=user_id,email`,
+    {},
+    true,
+  );
+  return rows[0] || null;
+}
+
+async function trackStripeEvent(event, customerId, eventName, params) {
+  const profile = await profileForCustomer(customerId).catch(() => null);
+  await sendGa4Event({
+    eventName,
+    eventId: event.id,
+    userId: profile?.user_id,
+    clientId: `stripe.${customerId}`,
+    params,
+  });
 }
 
 function getCurrentPeriodEnd(subscription) {
@@ -45,6 +65,23 @@ module.exports = async function handler(request, response) {
         subscription_status: "active",
         stripe_subscription_id: session.subscription,
       });
+      await sendGa4Event({
+        eventName: "purchase",
+        eventId: event.id,
+        userId: session.client_reference_id || session.metadata?.supabase_user_id,
+        clientId: `stripe.${session.customer}`,
+        params: {
+          transaction_id: session.id,
+          value: (session.amount_total || 0) / 100,
+          currency: (session.currency || "usd").toUpperCase(),
+          items: [{
+            item_id: "old_school_apps_pass",
+            item_name: "Old School Apps Pass",
+            price: (session.amount_total || 0) / 100,
+            quantity: 1,
+          }],
+        },
+      });
     }
 
     if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
@@ -55,6 +92,31 @@ module.exports = async function handler(request, response) {
         subscription_status: subscription.status,
         stripe_subscription_id: subscription.id,
         current_period_end: getCurrentPeriodEnd(subscription),
+      });
+      if (event.type === "customer.subscription.deleted") {
+        await trackStripeEvent(event, subscription.customer, "subscription_cancelled", {
+          subscription_id: subscription.id,
+          cancellation_reason: subscription.cancellation_details?.reason || "unknown",
+        });
+      }
+    }
+
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object;
+      await trackStripeEvent(event, invoice.customer, "payment_failed", {
+        transaction_id: invoice.id,
+        value: (invoice.amount_due || 0) / 100,
+        currency: (invoice.currency || "usd").toUpperCase(),
+        failure_reason: invoice.last_finalization_error?.message || "payment_failed",
+      });
+    }
+
+    if (event.type === "charge.refunded") {
+      const charge = event.data.object;
+      await trackStripeEvent(event, charge.customer, "refund", {
+        transaction_id: charge.id,
+        value: (charge.amount_refunded || 0) / 100,
+        currency: (charge.currency || "usd").toUpperCase(),
       });
     }
 
