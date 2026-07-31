@@ -1,5 +1,6 @@
 (function () {
   const measurementId = "G-Y9KJ0W90MZ";
+  const consentKey = "old-school-analytics-consent";
   if (window.__oldSchoolAnalyticsLoaded) return;
   window.__oldSchoolAnalyticsLoaded = true;
 
@@ -8,27 +9,31 @@
     || window.location.hostname.endsWith(".vercel.app")
     || new URLSearchParams(window.location.search).get("analytics_debug") === "1";
 
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function () {
-    window.dataLayer.push(arguments);
-  };
+  let analyticsReady = false;
 
-  if (!document.querySelector(`script[src*="gtag/js?id=${measurementId}"]`)) {
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-    document.head.appendChild(script);
+  function initializeAnalytics() {
+    if (analyticsReady) return;
+    analyticsReady = true;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () {
+      window.dataLayer.push(arguments);
+    };
+    if (!document.querySelector(`script[src*="gtag/js?id=${measurementId}"]`)) {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      document.head.appendChild(script);
+    }
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, {
+      page_title: document.title,
+      page_path: `${window.location.pathname}${window.location.search}`,
+      ...(debugTraffic ? { debug_mode: true } : {}),
+    });
   }
 
-  window.gtag("js", new Date());
-  window.gtag("config", measurementId, {
-    page_title: document.title,
-    page_path: `${window.location.pathname}${window.location.search}`,
-    ...(debugTraffic ? { debug_mode: true } : {}),
-  });
-
   function track(name, parameters = {}) {
-    if (!name || typeof window.gtag !== "function") return;
+    if (!name || !analyticsReady || typeof window.gtag !== "function") return;
     window.gtag("event", name, {
       ...parameters,
       ...(debugTraffic ? { debug_mode: true } : {}),
@@ -36,6 +41,27 @@
   }
 
   window.OldSchoolAnalytics = { track };
+
+  function showConsentBanner() {
+    const banner = document.createElement("aside");
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-label", "Analytics consent");
+    banner.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:620px;margin:auto;padding:14px;background:#c0c0c0;color:#000;border:2px solid #fff;box-shadow:inset -2px -2px #404040,inset 2px 2px #dfdfdf,4px 4px rgba(0,0,0,.25);font:14px Arial,sans-serif";
+    banner.innerHTML = `<strong>Analytics choice</strong><p style="margin:7px 0 12px">We use analytics to understand visits and improve Old School Apps. You can accept or decline optional analytics.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button data-consent="accept" type="button">Accept analytics</button><button data-consent="decline" type="button">Decline</button><a href="privacy.html" style="color:#000">Privacy Policy</a></div>`;
+    banner.addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-consent]")?.dataset.consent;
+      if (!choice) return;
+      localStorage.setItem(consentKey, choice === "accept" ? "granted" : "denied");
+      banner.remove();
+      if (choice === "accept") initializeAnalytics();
+    });
+    const mount = () => document.body?.appendChild(banner);
+    if (document.body) mount();
+    else document.addEventListener("DOMContentLoaded", mount, { once: true });
+  }
+
+  if (localStorage.getItem(consentKey) === "granted") initializeAnalytics();
+  else if (!localStorage.getItem(consentKey)) showConsentBanner();
 
   window.addEventListener("error", () => track("javascript_error", {
     page_path: window.location.pathname,
