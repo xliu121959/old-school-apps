@@ -766,6 +766,10 @@ function App() {
 
   useEffect(() => {
     const checkout = new URLSearchParams(window.location.search).get("checkout");
+    if (checkout === "cancelled") {
+      track("checkout_cancelled", { app: "vhs-watchlist" });
+      return;
+    }
     if (checkout !== "success" || !session?.access_token) return;
     setToast("Payment received. Activating your Apps Pass...");
     const timer = window.setTimeout(() => void refreshPassAfterCheckout(), 1000);

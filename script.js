@@ -323,7 +323,10 @@ async function startCheckout() {
   elements.checkoutButton.disabled = true;
   elements.upgradeMessage.textContent = "Opening secure checkout...";
   try {
-    const data = await apiRequest("/api/create-checkout-session", { method: "POST" });
+    const data = await apiRequest("/api/create-checkout-session", {
+      method: "POST",
+      body: JSON.stringify({ returnTo: "/index.html" }),
+    });
     window.location.assign(data.url);
   } catch (error) {
     track("checkout_error", { source: "catalog" });

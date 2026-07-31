@@ -1314,3 +1314,6 @@ if (checkoutResult === "success") {
   showToast("Payment received. Activating your Apps Pass...");
   window.setTimeout(() => refreshPassAfterCheckout(), 1000);
 }
+if (checkoutResult === "cancelled") {
+  track("checkout_cancelled", { app: "desk-calendar-planner" });
+}

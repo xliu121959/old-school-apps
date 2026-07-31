@@ -1185,6 +1185,9 @@ if (checkoutResult === "success") {
     loadAccount().then(renderAccountState).catch(() => {});
   }, 1200);
 }
+if (checkoutResult === "cancelled") {
+  track("checkout_cancelled", { app: "typewriter-notes" });
+}
 if (requestedUpgrade === "pass") {
   openUpgradeDialog();
 }
