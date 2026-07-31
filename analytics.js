@@ -3,6 +3,11 @@
   if (window.__oldSchoolAnalyticsLoaded) return;
   window.__oldSchoolAnalyticsLoaded = true;
 
+  const debugTraffic = window.location.hostname === "localhost"
+    || window.location.hostname === "127.0.0.1"
+    || window.location.hostname.endsWith(".vercel.app")
+    || new URLSearchParams(window.location.search).get("analytics_debug") === "1";
+
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () {
     window.dataLayer.push(arguments);
@@ -19,11 +24,15 @@
   window.gtag("config", measurementId, {
     page_title: document.title,
     page_path: `${window.location.pathname}${window.location.search}`,
+    ...(debugTraffic ? { debug_mode: true } : {}),
   });
 
   function track(name, parameters = {}) {
     if (!name || typeof window.gtag !== "function") return;
-    window.gtag("event", name, parameters);
+    window.gtag("event", name, {
+      ...parameters,
+      ...(debugTraffic ? { debug_mode: true } : {}),
+    });
   }
 
   window.OldSchoolAnalytics = { track };
