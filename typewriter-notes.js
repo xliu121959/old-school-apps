@@ -1,6 +1,7 @@
 const STORAGE_KEY = "typewriter-notes-prototype-state-v4";
 const LEGACY_STORAGE_KEYS = ["typewriter-notes-prototype-state-v3"];
 const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const CHECKOUT_SESSION_KEY = "old-school-checkout-in-progress";
 const FREE_NOTE_LIMIT = 25;
 const FREE_HISTORY_LIMIT = 3;
 
@@ -664,7 +665,8 @@ async function startCheckout() {
   elements.checkoutButton.disabled = true;
   elements.upgradeMessage.textContent = "Opening secure checkout...";
   try {
-    const data = await apiRequest("/api/create-checkout-session", { method: "POST" });
+    const data = await apiRequest("/api/create-checkout-session", { method: "POST", body: JSON.stringify({ returnTo: "/typewriter-notes.html" }) });
+    sessionStorage.setItem(CHECKOUT_SESSION_KEY, "1");
     window.location.href = data.url;
   } catch (error) {
     track("checkout_error", { app: "typewriter-notes" });
@@ -1180,14 +1182,21 @@ if (authState.session?.access_token) {
 const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
 const requestedUpgrade = new URLSearchParams(window.location.search).get("upgrade");
 if (checkoutResult === "success") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   showToast("Payment received. Activating your Apps Pass...");
   setTimeout(() => {
     loadAccount().then(renderAccountState).catch(() => {});
   }, 1200);
 }
 if (checkoutResult === "cancelled") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   track("checkout_cancelled", { app: "typewriter-notes" });
 }
+window.addEventListener("pageshow", () => {
+  if (checkoutResult || sessionStorage.getItem(CHECKOUT_SESSION_KEY) !== "1") return;
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+  track("checkout_cancelled", { app: "typewriter-notes", return_method: "browser_back" });
+});
 if (requestedUpgrade === "pass") {
   openUpgradeDialog();
 }

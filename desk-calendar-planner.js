@@ -1,5 +1,6 @@
 const PLANNER_STORAGE_KEY = "desk-calendar-planner-v1";
 const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const CHECKOUT_SESSION_KEY = "old-school-checkout-in-progress";
 const PLANNER_STATE_ENDPOINT = "/api/state?app=desk-calendar-planner";
 const PREMIUM_THEMES = new Set(["night", "executive"]);
 
@@ -541,6 +542,7 @@ async function startCheckout() {
       method: "POST",
       body: JSON.stringify({ returnTo: "/desk-calendar-planner.html" }),
     });
+    sessionStorage.setItem(CHECKOUT_SESSION_KEY, "1");
     window.location.href = data.url;
   } catch (error) {
     track("checkout_error", { app: "desk-calendar-planner" });
@@ -1311,9 +1313,16 @@ if (authState.session?.access_token) {
 
 const checkoutResult = new URLSearchParams(window.location.search).get("checkout");
 if (checkoutResult === "success") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   showToast("Payment received. Activating your Apps Pass...");
   window.setTimeout(() => refreshPassAfterCheckout(), 1000);
 }
 if (checkoutResult === "cancelled") {
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
   track("checkout_cancelled", { app: "desk-calendar-planner" });
 }
+window.addEventListener("pageshow", () => {
+  if (checkoutResult || sessionStorage.getItem(CHECKOUT_SESSION_KEY) !== "1") return;
+  sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+  track("checkout_cancelled", { app: "desk-calendar-planner", return_method: "browser_back" });
+});

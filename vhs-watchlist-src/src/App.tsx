@@ -73,6 +73,7 @@ import type {
 
 const STORAGE_KEY = "vhs-watchlist-library-v1";
 const AUTH_STORAGE_KEY = "typewriter-notes-auth-v1";
+const CHECKOUT_SESSION_KEY = "old-school-checkout-in-progress";
 const STATE_ENDPOINT = "/api/state?app=vhs-watchlist";
 const FREE_MOVIE_LIMIT = 25;
 
@@ -767,14 +768,27 @@ function App() {
   useEffect(() => {
     const checkout = new URLSearchParams(window.location.search).get("checkout");
     if (checkout === "cancelled") {
+      sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
       track("checkout_cancelled", { app: "vhs-watchlist" });
       return;
     }
+    if (checkout === "success") sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
     if (checkout !== "success" || !session?.access_token) return;
     setToast("Payment received. Activating your Apps Pass...");
     const timer = window.setTimeout(() => void refreshPassAfterCheckout(), 1000);
     return () => window.clearTimeout(timer);
   }, [session?.access_token]);
+
+  useEffect(() => {
+    const handlePageShow = () => {
+      if (new URLSearchParams(window.location.search).has("checkout")) return;
+      if (sessionStorage.getItem(CHECKOUT_SESSION_KEY) !== "1") return;
+      sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+      track("checkout_cancelled", { app: "vhs-watchlist", return_method: "browser_back" });
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   useEffect(() => {
     const planKnown = !session?.access_token || profile !== null;
@@ -1018,6 +1032,7 @@ function App() {
         method: "POST",
         body: JSON.stringify({ returnTo: "/vhs-watchlist" }),
       });
+      sessionStorage.setItem(CHECKOUT_SESSION_KEY, "1");
       window.location.href = data.url;
     } catch (error) {
       track("checkout_error", { app: "vhs-watchlist" });
