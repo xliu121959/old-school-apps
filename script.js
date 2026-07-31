@@ -115,6 +115,8 @@ const elements = {
   feedbackType: document.querySelector("#catalogFeedbackType"),
   feedbackMessage: document.querySelector("#catalogFeedbackMessage"),
   feedbackEmail: document.querySelector("#catalogFeedbackEmail"),
+  feedbackStatus: document.querySelector("#catalogFeedbackStatus"),
+  submitFeedbackButton: document.querySelector("#submitCatalogFeedbackButton"),
   closeFeedbackButton: document.querySelector("#closeCatalogFeedbackButton"),
   cancelFeedbackButton: document.querySelector("#cancelCatalogFeedbackButton"),
 };
@@ -422,17 +424,38 @@ elements.feedbackButton.addEventListener("click", openFeedbackDialog);
 elements.feedbackFloatButton.addEventListener("click", openFeedbackDialog);
 elements.closeFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
 elements.cancelFeedbackButton.addEventListener("click", () => elements.feedbackDialog.close());
-elements.feedbackForm.addEventListener("submit", (event) => {
+elements.feedbackForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const type = elements.feedbackType.value;
   const message = elements.feedbackMessage.value.trim();
   const email = elements.feedbackEmail.value.trim();
-  const subject = encodeURIComponent(`[Old School Apps] ${type}`);
-  const body = encodeURIComponent(`${message}${email ? `\n\nReply to: ${email}` : ""}`);
-  track("feedback_submitted", { source: "catalog", feedback_type: type });
-  window.location.href = `mailto:hello@example.com?subject=${subject}&body=${body}`;
-  elements.feedbackDialog.close();
-  elements.feedbackForm.reset();
+  elements.submitFeedbackButton.disabled = true;
+  elements.feedbackStatus.textContent = "Sending feedback...";
+  try {
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        message,
+        email,
+        pagePath: window.location.pathname,
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Unable to send feedback");
+    track("feedback_submitted", { source: "catalog", feedback_type: type });
+    elements.feedbackStatus.textContent = "Thanks. Your feedback was received.";
+    setTimeout(() => {
+      elements.feedbackDialog.close();
+      elements.feedbackForm.reset();
+      elements.feedbackStatus.textContent = "";
+    }, 900);
+  } catch (error) {
+    elements.feedbackStatus.textContent = error.message;
+  } finally {
+    elements.submitFeedbackButton.disabled = false;
+  }
 });
 
 if (authState.session?.access_token) {

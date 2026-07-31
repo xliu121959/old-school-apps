@@ -27,9 +27,23 @@ create table if not exists public.auth_rate_limits (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  feedback_type text not null default 'General feedback',
+  message text not null,
+  email text,
+  app_key text not null default 'catalog',
+  page_path text not null default '/',
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
 alter table public.profiles enable row level security;
 alter table public.app_states enable row level security;
 alter table public.auth_rate_limits enable row level security;
+alter table public.feedback enable row level security;
+
+revoke all on table public.feedback from anon, authenticated;
 
 drop policy if exists "Users can read their profile" on public.profiles;
 create policy "Users can read their profile"
