@@ -63,6 +63,6 @@ module.exports = async function handler(request, response) {
     }, true);
     json(response, 200, { saved: true });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };

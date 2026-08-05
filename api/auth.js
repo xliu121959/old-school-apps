@@ -277,7 +277,7 @@ module.exports = async function handler(request, response) {
     if (error.code) {
       return json(response, Number(error.status) || 400, { error: error.message, code: error.code });
     }
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };
 

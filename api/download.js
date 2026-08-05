@@ -29,6 +29,6 @@ module.exports = async function handler(request, response) {
     response.setHeader("Cache-Control", "no-store");
     json(response, 200, { url: downloadUrl });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };

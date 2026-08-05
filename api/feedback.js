@@ -87,6 +87,6 @@ module.exports = async function handler(request, response) {
 
     return json(response, 201, { received: true });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };

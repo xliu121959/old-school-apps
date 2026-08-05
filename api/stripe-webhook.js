@@ -82,6 +82,19 @@ module.exports = async function handler(request, response) {
           }],
         },
       });
+      await sendGa4Event({
+        eventName: "subscription_started",
+        eventId: `${event.id}.subscription_started`,
+        userId: session.client_reference_id || session.metadata?.supabase_user_id,
+        clientId: `stripe.${session.customer}`,
+        params: {
+          subscription_id: session.subscription,
+          subscription_status: "active",
+          value: (session.amount_total || 0) / 100,
+          currency: (session.currency || "usd").toUpperCase(),
+          billing_interval: "month",
+        },
+      });
     }
 
     if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
@@ -91,6 +104,14 @@ module.exports = async function handler(request, response) {
         plan: active ? "pro" : "free",
         subscription_status: subscription.status,
         stripe_subscription_id: subscription.id,
+        current_period_end: getCurrentPeriodEnd(subscription),
+      });
+      await trackStripeEvent(event, subscription.customer, "subscription_status_changed", {
+        subscription_id: subscription.id,
+        subscription_status: subscription.status,
+        value: (subscription.items?.data?.[0]?.price?.unit_amount || 0) / 100,
+        currency: (subscription.currency || "usd").toUpperCase(),
+        billing_interval: subscription.items?.data?.[0]?.price?.recurring?.interval || "month",
         current_period_end: getCurrentPeriodEnd(subscription),
       });
       if (event.type === "customer.subscription.deleted") {
@@ -122,7 +143,7 @@ module.exports = async function handler(request, response) {
 
     response.status(200).json({ received: true });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };
 

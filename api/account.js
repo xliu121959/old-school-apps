@@ -14,6 +14,6 @@ module.exports = async function handler(request, response) {
       canManageBilling: Boolean(profile.stripe_customer_id),
     });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };

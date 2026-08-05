@@ -46,6 +46,6 @@ module.exports = async function handler(request, response) {
 
     json(response, 200, { url: session.url });
   } catch (error) {
-    handleError(response, error);
+    await handleError(response, error, request);
   }
 };

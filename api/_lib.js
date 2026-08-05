@@ -84,9 +84,20 @@ async function ensureProfile(user) {
   return created[0];
 }
 
-function handleError(response, error) {
+async function handleError(response, error, request) {
   console.error(error);
   const status = Number(error.status) || 500;
+  if (status >= 500 && process.env.GA4_API_SECRET) {
+    await sendGa4Event({
+      eventName: "server_error",
+      eventId: `server-error-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      clientId: "server.errors",
+      params: {
+        status_code: status,
+        route: String(request?.url || "unknown").split("?")[0].slice(0, 200),
+      },
+    });
+  }
   json(response, status, {
     error: status >= 500 ? "Server configuration or service error" : error.message,
   });
