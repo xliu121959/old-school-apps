@@ -1,5 +1,6 @@
 (function () {
   const measurementId = "G-Y9KJ0W90MZ";
+  const metaPixelId = "1331118269183756";
   const consentKey = "old-school-analytics-consent";
   if (window.__oldSchoolAnalyticsLoaded) return;
   window.__oldSchoolAnalyticsLoaded = true;
@@ -10,6 +11,28 @@
     || new URLSearchParams(window.location.search).get("analytics_debug") === "1";
 
   let analyticsReady = false;
+  let metaPixelReady = false;
+
+  function initializeMetaPixel() {
+    if (metaPixelReady || typeof window.fbq === "function") return;
+    metaPixelReady = true;
+    window.fbq = function () {
+      window.fbq.callMethod
+        ? window.fbq.callMethod.apply(window.fbq, arguments)
+        : window.fbq.queue.push(arguments);
+    };
+    window.fbq.push = window.fbq;
+    window.fbq.loaded = true;
+    window.fbq.version = "2.0";
+    window.fbq.queue = [];
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://connect.facebook.net/en_US/fbevents.js";
+    document.head.appendChild(script);
+    window.fbq("init", metaPixelId);
+    window.fbq("track", "PageView");
+  }
 
   function initializeAnalytics() {
     if (analyticsReady) return;
@@ -30,6 +53,7 @@
       page_path: `${window.location.pathname}${window.location.search}`,
       ...(debugTraffic ? { debug_mode: true } : {}),
     });
+    initializeMetaPixel();
   }
 
   function track(name, parameters = {}) {
