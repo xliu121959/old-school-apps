@@ -84,6 +84,10 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- The trigger invokes this function internally; it should not be callable by
+-- browser roles or any other public database client.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+
 create index if not exists app_states_user_id_idx on public.app_states(user_id);
 create index if not exists profiles_stripe_customer_id_idx on public.profiles(stripe_customer_id);
 

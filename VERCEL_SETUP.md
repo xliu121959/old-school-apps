@@ -47,7 +47,14 @@ Enter provider secrets directly in Supabase. Do not put them in this repository.
 
 ## 3. Configure Vercel
 
-Add these environment variables to Production, Preview, and Development:
+Use separate Stripe credentials by Vercel environment. Keep Production on live
+Stripe and configure Preview/Development with Stripe test credentials. Vercel
+selects the correct values automatically; no code change or mode switch is
+needed when testing a Preview deployment.
+
+### Production variables
+
+Add these variables to the **Production** environment:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
@@ -60,6 +67,38 @@ Add these environment variables to Production, Preview, and Development:
 - `SITE_URL=https://old-school-apps.com`
 - `GOOGLE_OAUTH_ENABLED=false` until Google is configured in Supabase
 - `FACEBOOK_OAUTH_ENABLED=false` until Facebook is configured in Supabase
+
+For Production, use `sk_live_...`, the live `$10/month` price ID, and the live
+webhook signing secret.
+
+### Preview and Development variables
+
+Add the same application variables to **Preview** and **Development**, but use
+Stripe's test-mode values for these three entries:
+
+- `STRIPE_SECRET_KEY=sk_test_...`
+- `STRIPE_WEBHOOK_SECRET=whsec_...` from a test-mode webhook endpoint
+- `STRIPE_PRICE_ID=price_...` for a test-mode recurring `$10/month` price
+
+Keep `GA4_API_SECRET` in Preview if you want test payments reported to the
+same GA4 property. Do not commit any secret values to this repository.
+
+### Creating a safe Preview checkout
+
+1. In Stripe, enable **Test mode** and create a recurring `$10/month` test
+   price.
+2. Create a test-mode webhook endpoint for the Preview URL:
+   `https://<your-preview-domain>/api/stripe-webhook`.
+3. Subscribe it to `checkout.session.completed`,
+   `customer.subscription.updated`, `customer.subscription.deleted`,
+   `invoice.payment_failed`, and `charge.refunded`.
+4. Copy the test webhook signing secret into Vercel's Preview
+   `STRIPE_WEBHOOK_SECRET` variable.
+5. Redeploy the Preview deployment after saving environment variables.
+6. Use card `4242 4242 4242 4242` with any future expiry, any CVC, and any ZIP.
+
+The public Production deployment remains connected to live Stripe throughout
+this process.
 
 Never expose the Supabase service-role key or Stripe secret key in browser code.
 
