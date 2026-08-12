@@ -894,3 +894,258 @@ body.focus-mode .paper-frame {
     grid-template-columns: 1fr;
   }
 }
+
+/* Windows 98 collection pass: keep the writing surface warm, but give the shell
+   the same compact beveled hierarchy as the other Old School apps. */
+.app-window {
+  border: 2px solid #111;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #555;
+}
+
+.title-bar {
+  min-height: 34px;
+  padding: 4px 6px;
+  background: linear-gradient(90deg, #061477 0%, #104b9e 58%, #147cb8 100%);
+  border-bottom: 2px solid #808080;
+}
+
+.app-title {
+  gap: 7px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+.document-icon {
+  width: 24px;
+  height: 24px;
+  background: #dfdfdf;
+  border-color: #111;
+  box-shadow: inset -1px -1px #555, inset 1px 1px #fff;
+}
+
+.window-buttons span {
+  width: 23px;
+  height: 23px;
+  background: #c0c0c0;
+}
+
+.command-bar {
+  min-height: 50px;
+  padding: 6px 7px;
+  gap: 6px;
+  border-bottom: 3px solid #555;
+  box-shadow: inset 0 2px #eee;
+}
+
+.bevel-button,
+.theme-control select,
+.appearance-controls input[type="color"] {
+  border-width: 2px;
+  border-color: #fff #555 #555 #fff;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #eee;
+}
+
+.bevel-button {
+  min-height: 29px;
+  padding: 3px 9px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bevel-button:hover,
+.bevel-button:focus-visible,
+.theme-control select:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+.catalog-link {
+  color: #111;
+  background: #d8d8d8;
+}
+
+.pro-button {
+  color: #111;
+  background: #f6e779;
+}
+
+.workspace {
+  grid-template-columns: 205px 285px minmax(520px, 1fr) 250px;
+  background: #808080;
+}
+
+.library-panel,
+.notes-panel,
+.editor-panel,
+.inspector-panel {
+  background: #c0c0c0;
+  border-right: 2px solid #555;
+  border-left: 1px solid #fff;
+}
+
+.panel-heading {
+  min-height: 34px;
+  padding: 5px 8px;
+  background: #d7d7d7;
+  border-bottom: 2px solid #777;
+}
+
+.panel-heading h2 {
+  font-size: 13px;
+  letter-spacing: .2px;
+}
+
+.search-box {
+  padding: 8px 9px;
+  font-size: 12px;
+}
+
+.search-box input,
+.appearance-controls select,
+.dialog-field input {
+  border: 2px solid #555;
+  box-shadow: inset 1px 1px #888, inset -1px -1px #fff;
+}
+
+.folder-list {
+  gap: 3px;
+  padding: 7px 8px;
+}
+
+.folder-button {
+  min-height: 31px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.note-list {
+  gap: 5px;
+  padding: 7px;
+}
+
+.note-button {
+  min-height: 72px;
+  padding: 8px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #808080;
+}
+
+.note-button.active {
+  background: #09088a;
+  border-color: #fff #333 #333 #fff;
+}
+
+.note-button strong,
+.note-meta,
+.tag-pill,
+.inline-tags span {
+  font-size: 12px;
+}
+
+.tag-pill,
+.inline-tags span {
+  min-height: 21px;
+  padding: 2px 6px;
+  border-width: 1px;
+}
+
+.editor-panel {
+  background: #818181;
+}
+
+.editor-header {
+  min-height: 69px;
+  padding: 10px 12px 8px;
+  background: #c0c0c0;
+  border-bottom: 2px solid #555;
+}
+
+.note-title-input {
+  min-height: 34px;
+  padding: 4px 7px;
+  border: 2px solid #555;
+  box-shadow: inset 1px 1px #888, inset -1px -1px #fff;
+  font-size: 18px;
+}
+
+.editor-header p {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.sound-control {
+  align-self: center;
+  font-size: 12px;
+}
+
+.paper-frame {
+  width: min(860px, calc(100% - 56px));
+  margin: 24px auto 34px;
+  border: 2px solid #555;
+  box-shadow: 9px 9px 0 #505050, inset 1px 1px #fff;
+}
+
+#editor {
+  min-height: 470px;
+  padding: var(--editor-top-padding) 58px 62px 112px;
+}
+
+.inspector-panel {
+  border-right: 0;
+}
+
+.inspector-section {
+  padding: 10px 9px 12px;
+  border-bottom: 2px solid #777;
+}
+
+.inspector-section h3 {
+  margin-bottom: 9px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.history-list > span,
+.history-button {
+  min-height: 40px;
+  padding: 6px 7px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #808080;
+  font-size: 11px;
+}
+
+.status-bar {
+  min-height: 27px;
+  padding: 3px;
+  border-top: 2px solid #fff;
+  background: #c0c0c0;
+  font-size: 11px;
+}
+
+.status-bar span {
+  min-height: 22px;
+  padding: 2px 8px;
+  border-width: 2px;
+}
+
+.export-dialog {
+  border-width: 2px;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, .38);
+}
+
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: 190px 250px minmax(360px, 1fr) 235px;
+  }
+}
+
+@media (max-width: 980px) {
+  .paper-frame {
+    width: calc(100% - 28px);
+  }
+
+  #editor {
+    padding-left: 72px;
+  }
+}
