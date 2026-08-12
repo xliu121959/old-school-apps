@@ -56,9 +56,9 @@ const apps = [
     tagline: "A tactile contact manager for real relationships.",
     features: ["Business-card records", "Follow-up reminders", "Fast alphabetical flipping"],
     platform: "Web",
-    status: "Coming Soon",
-    action: "Join Waitlist",
-    link: "https://example.com/rolodex-contacts/waitlist",
+    status: "Available",
+    action: "Open Web App",
+    link: "rolodex-contacts/index.html",
     icon: "rolodex",
   },
   {
