@@ -795,6 +795,15 @@ h1 {
   order: -1;
 }
 
+.locked-action {
+  position: relative;
+}
+
+.locked-action::before {
+  content: "[LOCKED] ";
+  font-weight: 700;
+}
+
 .featured-actions {
   margin-top: 16px;
 }

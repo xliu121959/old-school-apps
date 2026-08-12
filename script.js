@@ -166,6 +166,9 @@ function renderAppCard(app) {
   const featureItems = app.features.map((feature) => `<li>${feature}</li>`).join("");
   const downloads = app.downloads || [{ action: app.action, link: app.link }];
   const downloadLinks = downloads.map((download) => {
+    if (!authState.session?.access_token) {
+      return `<button class="download-link locked-action" data-download-id="${download.id || ""}" type="button">${download.action}</button>`;
+    }
     if (download.paid) {
       return `<button class="download-link paid-download" data-download-id="${download.id}" type="button">${download.action}</button>`;
     }
@@ -209,14 +212,17 @@ function renderAccount() {
 }
 
 function renderCatalogVisibility(signedIn = Boolean(authState.session?.access_token)) {
-  elements.authGate.hidden = signedIn;
-  elements.appGrid.hidden = !signedIn;
-  elements.featuredSection.hidden = !signedIn;
-  elements.screensSection.hidden = !signedIn;
-  if (signedIn && !elements.appGrid.innerHTML) {
-    elements.appGrid.innerHTML = apps.map(renderAppCard).join("");
-  }
-  if (!signedIn) elements.appGrid.replaceChildren();
+  elements.authGate.hidden = true;
+  elements.appGrid.hidden = false;
+  elements.featuredSection.hidden = false;
+  elements.screensSection.hidden = false;
+  elements.appGrid.innerHTML = apps.map(renderAppCard).join("");
+  document.querySelectorAll(".featured-actions [data-download-id]").forEach((button) => {
+    const original = button.dataset.originalAction || button.textContent.trim();
+    button.dataset.originalAction = original;
+    button.textContent = signedIn ? original : `Locked: ${original} - Sign In`;
+    button.classList.toggle("locked-action", !signedIn);
+  });
 }
 
 async function refreshSession() {
@@ -402,7 +408,13 @@ renderAccount();
 
 document.addEventListener("click", (event) => {
   const downloadButton = event.target.closest("[data-download-id]");
-  if (downloadButton) void requestDownload(downloadButton.dataset.downloadId, downloadButton);
+  if (!downloadButton) return;
+  if (downloadButton.classList.contains("locked-action")) {
+    elements.authMessage.textContent = "Sign in to open apps and access downloads.";
+    elements.authDialog.showModal();
+    return;
+  }
+  void requestDownload(downloadButton.dataset.downloadId, downloadButton);
 });
 
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
