@@ -58,7 +58,7 @@ const apps = [
     platform: "Web",
     status: "Available",
     action: "Open Web App",
-    link: "rolodex-contacts/index.html",
+    link: "rolodex-contacts/",
     icon: "rolodex",
   },
   {
