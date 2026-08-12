@@ -225,6 +225,113 @@ button.primary-action:disabled {
   padding: 20px 0 14px;
 }
 
+.access-landing {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
+  gap: 14px;
+  align-items: stretch;
+  padding: 18px 0 4px;
+}
+
+.access-landing-copy,
+.access-plan {
+  background: var(--win-face);
+  border-color: var(--win-highlight) var(--win-shadow) var(--win-shadow) var(--win-highlight);
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: inset -1px -1px 0 var(--win-face-dark), inset 1px 1px 0 var(--win-face-light);
+}
+
+.access-landing-copy {
+  position: relative;
+  padding: 38px 18px 16px;
+}
+
+.access-landing-copy::before {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  left: 3px;
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 3px 7px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--title-blue), var(--title-blue-2));
+  content: "Old School Apps - Access Desk";
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.access-landing-copy h1 {
+  max-width: 520px;
+  margin-bottom: 10px;
+  font-size: clamp(1.7rem, 3.4vw, 3.2rem);
+  line-height: 1;
+}
+
+.access-landing-copy p:last-child {
+  max-width: 500px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.access-plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.access-plan {
+  padding: 14px;
+}
+
+.access-plan-pass {
+  border-top: 4px solid var(--red);
+}
+
+.access-plan-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--win-face-dark);
+}
+
+.access-plan h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.access-plan-heading strong {
+  color: var(--title-blue);
+  font-size: 1.35rem;
+}
+
+.access-plan-heading small {
+  font-size: 0.7rem;
+}
+
+.access-plan p {
+  min-height: 38px;
+  margin: 10px 0 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.access-plan ul {
+  min-height: 66px;
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.access-plan .primary-action {
+  width: 100%;
+}
+
 .intro-copy,
 .terminal-panel,
 .retro-window,
@@ -1367,6 +1474,20 @@ body.pass-active .paid-download::after {
 
   .catalog-intro {
     padding-top: 14px;
+  }
+
+  .access-landing,
+  .access-plans {
+    grid-template-columns: 1fr;
+  }
+
+  .access-landing {
+    padding-top: 14px;
+  }
+
+  .access-plan p,
+  .access-plan ul {
+    min-height: 0;
   }
 
   .app-grid,

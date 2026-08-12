@@ -94,6 +94,8 @@ const elements = {
   screensSection: document.querySelector("#screens"),
   accountButton: document.querySelector("#catalogAccountButton"),
   passButton: document.querySelector("#catalogPassButton"),
+  landingSignInButton: document.querySelector("#landingSignInButton"),
+  landingPassButton: document.querySelector("#landingPassButton"),
   authDialog: document.querySelector("#catalogAuthDialog"),
   authForm: document.querySelector("#catalogAuthForm"),
   authEmail: document.querySelector("#catalogAuthEmail"),
@@ -451,6 +453,11 @@ elements.gateSignInButton.addEventListener("click", () => {
   elements.authDialog.showModal();
 });
 elements.passButton.addEventListener("click", () => elements.upgradeDialog.showModal());
+elements.landingSignInButton.addEventListener("click", () => {
+  elements.authMessage.textContent = "";
+  elements.authDialog.showModal();
+});
+elements.landingPassButton.addEventListener("click", () => elements.upgradeDialog.showModal());
 elements.authForm.addEventListener("submit", (event) => {
   event.preventDefault();
   void submitAuth("login");
