@@ -52,15 +52,30 @@
             </div>
             <div class="terminal-lines">
               <p>&gt; catalog scan complete</p>
-              <p>&gt; 6 apps indexed</p>
-              <p>&gt; downloads ready</p>
+              <p>&gt; member access required</p>
+              <p>&gt; sign in to open catalog</p>
             </div>
           </aside>
         </section>
 
-        <section class="app-grid" id="app-grid" aria-label="App catalog"></section>
+        <section class="catalog-auth-gate" id="catalogAuthGate" aria-labelledby="catalogAuthGateTitle">
+          <div class="retro-window catalog-auth-window">
+            <div class="window-titlebar">
+              <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
+              <span>Member Access</span>
+            </div>
+            <div class="catalog-auth-gate-content">
+              <p class="stamp-label">Private Catalog</p>
+              <h2 id="catalogAuthGateTitle">Sign in to view the app collection.</h2>
+              <p>App details, web apps, screenshots, and download links are available to signed-in members.</p>
+              <button class="primary-action" id="catalogGateSignInButton" type="button">Sign In to Continue</button>
+            </div>
+          </div>
+        </section>
 
-        <section class="featured-section" id="featured" aria-labelledby="featured-title">
+        <section class="app-grid" id="app-grid" aria-label="App catalog" hidden></section>
+
+        <section class="featured-section" id="featured" aria-labelledby="featured-title" hidden>
           <div class="retro-window featured-window">
             <div class="window-titlebar">
               <div class="window-controls" aria-hidden="true">
@@ -109,7 +124,7 @@
           </div>
         </section>
 
-        <section class="screens-section" id="screens" aria-labelledby="screens-title">
+        <section class="screens-section" id="screens" aria-labelledby="screens-title" hidden>
           <div class="section-heading">
             <p class="stamp-label">Interface Notes</p>
             <h2 id="screens-title">Retro UI mockups, built for modern use.</h2>

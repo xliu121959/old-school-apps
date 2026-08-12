@@ -387,6 +387,37 @@ h1 {
   padding: 12px 0 36px;
 }
 
+.catalog-auth-gate {
+  padding: 12px 0 36px;
+}
+
+.catalog-auth-window {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.catalog-auth-gate-content {
+  padding: 28px;
+  text-align: center;
+}
+
+.catalog-auth-gate-content h2 {
+  margin: 8px 0 10px;
+  color: var(--ink);
+  font-size: clamp(22px, 3vw, 32px);
+}
+
+.catalog-auth-gate-content p:not(.stamp-label) {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  color: #333;
+  font-size: 1rem;
+}
+
+.catalog-auth-gate-content .primary-action {
+  min-width: 210px;
+}
+
 .app-card {
   display: flex;
   min-height: 366px;

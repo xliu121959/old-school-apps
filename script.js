@@ -88,6 +88,10 @@ const authState = { session: loadSession(), profile: null };
 
 const elements = {
   appGrid: document.querySelector("#app-grid"),
+  authGate: document.querySelector("#catalogAuthGate"),
+  gateSignInButton: document.querySelector("#catalogGateSignInButton"),
+  featuredSection: document.querySelector("#featured"),
+  screensSection: document.querySelector("#screens"),
   accountButton: document.querySelector("#catalogAccountButton"),
   passButton: document.querySelector("#catalogPassButton"),
   authDialog: document.querySelector("#catalogAuthDialog"),
@@ -201,6 +205,18 @@ function renderAccount() {
   elements.accountUpgradeButton.hidden = isPro();
   elements.billingButton.hidden = !authState.profile?.canManageBilling;
   document.body.classList.toggle("pass-active", isPro());
+  renderCatalogVisibility(signedIn);
+}
+
+function renderCatalogVisibility(signedIn = Boolean(authState.session?.access_token)) {
+  elements.authGate.hidden = signedIn;
+  elements.appGrid.hidden = !signedIn;
+  elements.featuredSection.hidden = !signedIn;
+  elements.screensSection.hidden = !signedIn;
+  if (signedIn && !elements.appGrid.innerHTML) {
+    elements.appGrid.innerHTML = apps.map(renderAppCard).join("");
+  }
+  if (!signedIn) elements.appGrid.replaceChildren();
 }
 
 async function refreshSession() {
@@ -381,7 +397,6 @@ async function requestDownload(id, button) {
   }
 }
 
-elements.appGrid.innerHTML = apps.map(renderAppCard).join("");
 readOAuthCallback();
 renderAccount();
 
@@ -407,6 +422,10 @@ elements.accountButton.addEventListener("click", () => {
     elements.authMessage.textContent = "";
     elements.authDialog.showModal();
   }
+});
+elements.gateSignInButton.addEventListener("click", () => {
+  elements.authMessage.textContent = "";
+  elements.authDialog.showModal();
 });
 elements.passButton.addEventListener("click", () => elements.upgradeDialog.showModal());
 elements.authForm.addEventListener("submit", (event) => {
