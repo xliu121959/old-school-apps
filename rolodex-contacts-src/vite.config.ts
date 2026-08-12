@@ -4,7 +4,7 @@ import { resolve } from "path";
 
 export default defineConfig({
   root: resolve(__dirname),
-  base: "./",
+  base: "/rolodex-contacts/",
   plugins: [react()],
   build: { outDir: resolve(__dirname, "../rolodex-contacts"), emptyOutDir: true },
 });
