@@ -25,7 +25,7 @@ const apps = [
     platform: "Mac",
     status: "Available",
     downloads: [
-      { action: "Open Web App", link: "typewriter-notes.html" },
+      { action: "Open Web App", link: "typewriter-notes.html", free: true },
       { action: "Download for Windows - Pass", id: "typewriter-notes-windows", paid: true },
       { action: "Download for Mac - Pass", id: "typewriter-notes-mac", paid: true },
     ],
@@ -165,9 +165,13 @@ function readOAuthCallback() {
 function renderAppCard(app) {
   const featureItems = app.features.map((feature) => `<li>${feature}</li>`).join("");
   const downloads = app.downloads || [{ action: app.action, link: app.link }];
+  const signedIn = Boolean(authState.session?.access_token);
   const downloadLinks = downloads.map((download) => {
-    if (!authState.session?.access_token) {
-      return `<button class="download-link locked-action" data-download-id="${download.id || ""}" type="button">${download.action}</button>`;
+    const freeAccess = Boolean(download.free);
+    const available = signedIn && (isPro() || freeAccess);
+    if (!available) {
+      const lockReason = signedIn ? "pass" : "auth";
+      return `<button class="download-link locked-action" data-download-id="${download.id || ""}" data-lock-reason="${lockReason}" type="button">${download.action}</button>`;
     }
     if (download.paid) {
       return `<button class="download-link paid-download" data-download-id="${download.id}" type="button">${download.action}</button>`;
@@ -220,8 +224,10 @@ function renderCatalogVisibility(signedIn = Boolean(authState.session?.access_to
   document.querySelectorAll(".featured-actions [data-download-id]").forEach((button) => {
     const original = button.dataset.originalAction || button.textContent.trim();
     button.dataset.originalAction = original;
-    button.textContent = signedIn ? original : `Locked: ${original} - Sign In`;
-    button.classList.toggle("locked-action", !signedIn);
+    const available = signedIn && isPro();
+    button.textContent = original;
+    button.dataset.lockReason = signedIn ? "pass" : "auth";
+    button.classList.toggle("locked-action", !available);
   });
 }
 
@@ -410,8 +416,13 @@ document.addEventListener("click", (event) => {
   const downloadButton = event.target.closest("[data-download-id]");
   if (!downloadButton) return;
   if (downloadButton.classList.contains("locked-action")) {
-    elements.authMessage.textContent = "Sign in to open apps and access downloads.";
-    elements.authDialog.showModal();
+    if (downloadButton.dataset.lockReason === "pass" && authState.session?.access_token) {
+      elements.upgradeMessage.textContent = "This app requires an active Apps Pass. Typewriter Notes web is included with your free account.";
+      elements.upgradeDialog.showModal();
+    } else {
+      elements.authMessage.textContent = "Sign in to open Typewriter Notes web. An Apps Pass unlocks the other apps and desktop downloads.";
+      elements.authDialog.showModal();
+    }
     return;
   }
   void requestDownload(downloadButton.dataset.downloadId, downloadButton);
