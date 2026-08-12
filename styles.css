@@ -414,6 +414,41 @@ h1 {
   font-size: 1rem;
 }
 
+.member-app-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+  max-width: 620px;
+  margin: 0 auto 22px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.member-app-preview li {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 8px 10px;
+  color: #000;
+  background: #fff;
+  border: 2px solid var(--win-shadow);
+  box-shadow: inset 1px 1px var(--win-highlight);
+}
+
+.member-app-preview strong,
+.member-app-preview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-app-preview span {
+  margin-top: 2px;
+  color: #444;
+  font-size: 0.82rem;
+}
+
 .catalog-auth-gate-content .primary-action {
   min-width: 210px;
 }
@@ -1327,6 +1362,10 @@ body.pass-active .paid-download::after {
 
   .app-grid,
   .mockup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-app-preview {
     grid-template-columns: 1fr;
   }
 
