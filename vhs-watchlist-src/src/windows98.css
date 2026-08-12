@@ -84,6 +84,21 @@ a:focus-visible {
   gap: 8px;
 }
 
+.collection-back {
+  margin-left: auto;
+  margin-right: 10px;
+  padding: 5px 8px;
+  color: #111;
+  background: #c0c0c0;
+  border: 2px solid #fff;
+  box-shadow: inset -2px -2px #555, inset 2px 2px #eee;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.collection-back:active { box-shadow: inset 2px 2px #555; }
+
 .brand strong {
   overflow: hidden;
   font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;

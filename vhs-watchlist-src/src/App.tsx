@@ -1258,6 +1258,7 @@ function App() {
           <span className="brand-tape" aria-hidden="true"><i /><i /></span>
           <span><strong>VHS Watchlist</strong><small>Old School Apps</small></span>
         </a>
+        <a className="collection-back" href="../index.html">Back to Main Page</a>
         <div className="win98-window-controls" aria-hidden="true">
           <span>_</span>
           <span>□</span>
