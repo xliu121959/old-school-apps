@@ -1,6 +1,7 @@
 (function () {
   const measurementId = "G-Y9KJ0W90MZ";
   const metaPixelId = "1331118269183756";
+  const redditPixelId = "a2_jjlfyseffvp2";
   const consentKey = "old-school-analytics-consent";
   if (window.__oldSchoolAnalyticsLoaded) return;
   window.__oldSchoolAnalyticsLoaded = true;
@@ -12,6 +13,44 @@
 
   let analyticsReady = false;
   let metaPixelReady = false;
+  let redditPixelReady = false;
+
+  // These are the product-funnel events shared by GA4, Meta, and Reddit.
+  // Other app events continue to go to GA4 only.
+  const pixelEvents = new Set([
+    "app_opened",
+    "login_started",
+    "login_completed",
+    "signup_started",
+    "signup_completed",
+    "auth_failed",
+    "checkout_started",
+    "checkout_cancelled",
+    "checkout_error",
+    "purchase",
+    "download_requested",
+    "download_ready",
+    "feedback_submitted",
+    "search_used",
+    "export_completed",
+  ]);
+
+  const metaStandardEvents = {
+    app_opened: "ViewContent",
+    signup_completed: "CompleteRegistration",
+    checkout_started: "InitiateCheckout",
+    purchase: "Purchase",
+    feedback_submitted: "Lead",
+    search_used: "Search",
+  };
+
+  const redditStandardEvents = {
+    app_opened: "ViewContent",
+    signup_completed: "Sign Up",
+    purchase: "Purchase",
+    feedback_submitted: "Lead",
+    search_used: "Search",
+  };
 
   function initializeMetaPixel() {
     if (metaPixelReady || typeof window.fbq === "function") return;
@@ -54,14 +93,45 @@
       ...(debugTraffic ? { debug_mode: true } : {}),
     });
     initializeMetaPixel();
+    initializeRedditPixel();
+  }
+
+  function initializeRedditPixel() {
+    if (redditPixelReady || typeof window.rdt === "function") return;
+    redditPixelReady = true;
+    window.rdt = function () {
+      window.rdt.sendEvent
+        ? window.rdt.sendEvent.apply(window.rdt, arguments)
+        : window.rdt.callQueue.push(arguments);
+    };
+    window.rdt.callQueue = [];
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://www.redditstatic.com/ads/pixel.js";
+    document.head.appendChild(script);
+    window.rdt("init", redditPixelId);
+    window.rdt("track", "PageVisit");
   }
 
   function track(name, parameters = {}) {
     if (!name || !analyticsReady || typeof window.gtag !== "function") return;
-    window.gtag("event", name, {
+    const eventParameters = {
       ...parameters,
       ...(debugTraffic ? { debug_mode: true } : {}),
-    });
+    };
+    window.gtag("event", name, eventParameters);
+
+    if (!pixelEvents.has(name)) return;
+
+    if (typeof window.fbq === "function") {
+      const metaEvent = metaStandardEvents[name];
+      window.fbq(metaEvent ? "track" : "trackCustom", metaEvent || name, parameters);
+    }
+
+    if (typeof window.rdt === "function") {
+      window.rdt("track", redditStandardEvents[name] || name, parameters);
+    }
   }
 
   window.OldSchoolAnalytics = { track };
